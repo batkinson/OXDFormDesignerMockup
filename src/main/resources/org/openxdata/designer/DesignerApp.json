@@ -29,4 +29,21 @@
 	questionTypeNullLabel: "None",
 	questionTypeTextLabel: "Text",
 	questionTypeNumericLabel: "Numeric",
+	questionTypeDecimalLabel: "Decimal",
+	questionTypeDateLabel: "Date",
+	questionTypeTimeLabel: "Time",
+	questionTypeListExclusiveLabel: "List Exclusive",
+	questionTypeListMultipleLabel: "List Multiple",
+	questionTypeDateTimeLabel: "Date/Time",
+	questionTypeBooleanLabel: "Boolean",
+	questionTypeRepeatLabel: "Repeat",
+	questionTypeImageLabel: "Image",
+	questionTypeVideoLabel: "Video",
+	questionTypeAudioLabel: "Audio",
+	questionTypeListExclusiveDynamicLabel: "List Exclusive Dynamic",
+	questionTypeGpsLabel: "GPS",
+	questionTypeBarcodeLabel: "Barcode",
+	questionTypePhonenumberLabel: "Phonenumber",
+	
+	
 }

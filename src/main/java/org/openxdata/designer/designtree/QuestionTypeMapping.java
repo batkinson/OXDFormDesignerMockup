@@ -1,6 +1,7 @@
 package org.openxdata.designer.designtree;
 
 import java.lang.reflect.Field;
+import java.text.MessageFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -8,42 +9,66 @@ import java.util.regex.Pattern;
 
 import org.apache.pivot.collections.ArrayList;
 import org.apache.pivot.collections.List;
+import org.apache.pivot.util.Resources;
 import org.apache.pivot.wtk.ListView;
 import org.fcitmuk.epihandy.QuestionDef;
 
 public class QuestionTypeMapping implements ListView.ItemBindMapping,
 		ListView.ListDataBindMapping {
 
-	public static final Map<String, Byte> QUESTION_VALUES = new LinkedHashMap<String, Byte>();
-	public static final String QUESTION_TYPE_FIELD_PREFIX = "QTN_TYPE_";
+	private final Map<String, Byte> questionValues = new LinkedHashMap<String, Byte>();
+	private final Map<String, String> typeLabels = new LinkedHashMap<String, String>();
+	private final String QUESTION_TYPE_FIELD_PREFIX = "QTN_TYPE_";
 	private static final Pattern uscorePattern = Pattern.compile("_(\\w)");
-	
-	// TODO: Use localized labels
-	static {
+
+	public QuestionTypeMapping(Resources resources) {
+
+		// Populate the values based on the QuestionDef static fields
 		for (Field field : QuestionDef.class.getFields()) {
 			if (field.getName().startsWith(QUESTION_TYPE_FIELD_PREFIX)) {
 				String name = field.getName()
 						.replace(QUESTION_TYPE_FIELD_PREFIX, "").toLowerCase();
 				try {
 					Byte value = (Byte) field.get(QuestionDef.class);
-					QUESTION_VALUES.put(name, value);
+					String camelCaseTypeName = convertToCamelCase(name);
+					String initLetter = camelCaseTypeName.substring(0, 1);
+					String resourceName = MessageFormat.format(
+							"questionType{0}Label", initLetter.toUpperCase()
+									+ camelCaseTypeName.substring(1));
+					questionValues.put(resourceName, value);
 				} catch (Exception e) {
 					System.err.println("Failed to load question type " + name
 							+ ": " + e.getLocalizedMessage());
 				}
 			}
 		}
+
+		// Populate the label mappings using resources
+		for (String typeName : questionValues.keySet()) {
+			if (resources.containsKey(typeName)) {
+				String label = (String) resources.get(typeName);
+				typeLabels.put(label, typeName);
+			} else
+				typeLabels.put(typeName, typeName);
+		}
 	}
 
-	public static List<String> getValueNames() {
+	public List<String> getValueNames() {
 		List<String> valuesList = new ArrayList<String>();
-		for (String valueName : QUESTION_VALUES.keySet())
+		for (String valueName : questionValues.keySet())
 			valuesList.add(valueName);
 		return valuesList;
 	}
 
+	public List<String> getTypeLabels() {
+		List<String> labelList = new ArrayList<String>();
+		for (String typeLabel : typeLabels.keySet())
+			labelList.add(typeLabel);
+		return labelList;
+	}
+
 	private String getNameForValue(Byte value) {
-		for (Map.Entry<String, Byte> entry : QUESTION_VALUES.entrySet()) {
+		for (Map.Entry<String, Byte> entry : questionValues.entrySet()) {
 			if (entry.getValue().equals(value)) {
 				return entry.getKey();
 			}
@@ -51,7 +76,35 @@ public class QuestionTypeMapping implements ListView.ItemBindMapping,
 		return null;
 	}
 
-	@SuppressWarnings("unused")
+	private String getLabelForName(String typeName) {
+		for (Map.Entry<String, String> entry : typeLabels.entrySet()) {
+			if (entry.getValue().equals(typeName)) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+
+	private String getLabelForValue(Byte value) {
+		String result = null;
+		String typeName = getNameForValue(value);
+		if (typeName != null) {
+			result = getLabelForName(typeName);
+		}
+		return result;
+	}
+
+	private Byte getValueForLabel(String label) {
+		Byte result = null;
+		if (typeLabels.containsKey(label)) {
+			String type = typeLabels.get(label);
+			if (questionValues.containsKey(type)) {
+				result = questionValues.get(type);
+			}
+		}
+		return result;
+	}
+
 	private static String convertToCamelCase(String name) {
 		StringBuffer camelCaseName = new StringBuffer();
 		Matcher m = uscorePattern.matcher(name);
@@ -63,30 +116,29 @@ public class QuestionTypeMapping implements ListView.ItemBindMapping,
 	}
 
 	/**
-	 * Should get a list of byte values, want to return a list of names.
+	 * Should get a list of byte values, want to return a list of labels.
 	 */
 	public List<?> toListData(Object value) {
-		List<Object> nameList = new ArrayList<Object>();
+		List<Object> labelList = new ArrayList<Object>();
 		for (Object item : (List<?>) value) {
-			if (item instanceof String) {
-				nameList.add(item.toString());
-			} else if (item instanceof Byte) {
-				String valueName = getNameForValue((Byte) item);
-				if (valueName != null)
-					nameList.add(valueName);
+			if (item instanceof Byte) {
+				Byte byteValue = (Byte) item;
+				String label = getLabelForValue(byteValue);
+				if (label != null)
+					labelList.add(label);
 			}
 		}
-		return nameList;
+		return labelList;
 	}
 
 	/**
-	 * Should get a list of names, want to return a list of values.
+	 * Should get a list of labels, want to return a list of values.
 	 */
 	public Object valueOf(List<?> listData) {
 		List<Object> valueList = new ArrayList<Object>();
 		for (Object item : listData) {
-			if (item instanceof String && QUESTION_VALUES.containsKey(item)) {
-				valueList.add(QUESTION_VALUES.get(item.toString()));
+			if (item instanceof String && typeLabels.containsKey(item)) {
+				valueList.add(typeLabels.get(item.toString()));
 			}
 		}
 		return valueList;
@@ -97,9 +149,10 @@ public class QuestionTypeMapping implements ListView.ItemBindMapping,
 	 */
 	public int indexOf(List<?> listData, Object value) {
 		@SuppressWarnings("unchecked")
-		List<String> typedListData = (List<String>) listData;
-		String valueName = getNameForValue((Byte) value);
-		return typedListData.indexOf(valueName);
+		List<String> labelList = (List<String>) listData;
+		Byte byteValue = (Byte) value;
+		String labelName = getLabelForValue(byteValue);
+		return labelList.indexOf(labelName);
 	}
 
 	/**
@@ -107,8 +160,8 @@ public class QuestionTypeMapping implements ListView.ItemBindMapping,
 	 */
 	public Object get(List<?> listData, int index) {
 		@SuppressWarnings("unchecked")
-		List<String> typedListData = (List<String>) listData;
-		String valueName = typedListData.get(index);
-		return QUESTION_VALUES.get(valueName);
+		List<String> labelList = (List<String>) listData;
+		String label = labelList.get(index);
+		return getValueForLabel(label);
 	}
 }

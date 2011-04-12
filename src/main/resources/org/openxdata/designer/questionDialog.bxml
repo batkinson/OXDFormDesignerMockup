@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Dialog bxml:id="questionDialog" title="%questionDialogTitle"
+<designer:QuestionDialog bxml:id="questionDialog" title="%questionDialogTitle"
 	xmlns:bxml="http://pivot.apache.org/bxml"
 	xmlns:content="org.apache.pivot.wtk.content"
 	xmlns:collections="org.apache.pivot.collections"
+	xmlns:designer="org.openxdata.designer"
 	xmlns:designtree="org.openxdata.designer.designtree"
 	xmlns="org.apache.pivot.wtk">
-	
-	<bxml:define>
-		<designtree:QuestionTypeMapping bxml:id="questionTypeMapping" />
-	</bxml:define>
 	
 	<TablePane>
 		<columns>
@@ -27,8 +24,7 @@
 						<TextInput bxml:id="questionHelpText" textKey="helpText" />
 					</BoxPane>
 					<BoxPane Form.label="%questionTypeLabel">
-						<ListButton bxml:id="questionType" selectedItemKey="type" listData="$questionTypeMapping.valueNames"
-							selectedItemBindMapping="$questionTypeMapping" /> 
+						<ListButton bxml:id="questionType" selectedItemKey="type" /> 
 					</BoxPane>
 					<BoxPane Form.label="%questionVariableNameLabel">
 						<TextInput bxml:id="questionVariableNameText" textKey="variableName" />
@@ -57,4 +53,4 @@
 			</BoxPane>
 		</TablePane.Row>
 	</TablePane>
-</Dialog>
+</designer:QuestionDialog>
