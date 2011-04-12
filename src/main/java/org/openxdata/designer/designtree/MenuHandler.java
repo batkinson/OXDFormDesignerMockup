@@ -76,6 +76,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				propertiesItem.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
+						formDialog.getUserData().put("activeForm", form);
 						formDialog.load(new BeanAdapter(form));
 						formDialog.open(designTree.getDisplay(),
 								designTree.getWindow());
@@ -110,6 +111,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				propertiesItem.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
+						pageDialog.getUserData().put("activePage", page);
 						pageDialog.load(new BeanAdapter(page));
 						pageDialog.open(designTree.getDisplay(),
 								designTree.getWindow());
@@ -137,6 +139,8 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				propertiesItem.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
+						questionDialog.getUserData().put("activeQuestion",
+								question);
 						questionDialog.load(new BeanAdapter(question));
 						questionDialog.open(designTree.getDisplay(),
 								designTree.getWindow());

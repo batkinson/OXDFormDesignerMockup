@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Dialog bxml:id="formDialog" title="%formDialogTitle"
+<designer:FormDialog bxml:id="formDialog" title="%formDialogTitle"
 	xmlns:bxml="http://pivot.apache.org/bxml"
+	xmlns:designer="org.openxdata.designer"
 	xmlns:content="org.apache.pivot.wtk.content"
 	xmlns="org.apache.pivot.wtk">
 	<TablePane preferredWidth="320" preferredHeight="210">
@@ -21,8 +22,9 @@
 		</TablePane.Row>
 		<TablePane.Row height="-1">
 			<BoxPane styles="{horizontalAlignment:'right'}">
-				<PushButton buttonData="Close" ButtonPressListener.buttonPressed="formDialog.close()"/>
+				<PushButton buttonData="Cancel" ButtonPressListener.buttonPressed="formDialog.close()"/>
+				<PushButton bxml:id="formDialogSaveButton" buttonData="Save" />
 			</BoxPane>
 		</TablePane.Row>
 	</TablePane>
-</Dialog>
+</designer:FormDialog>

@@ -49,7 +49,8 @@
 		</TablePane.Row>
 		<TablePane.Row height="-1">
 			<BoxPane styles="{horizontalAlignment:'right'}">
-				<PushButton buttonData="Close" ButtonPressListener.buttonPressed="questionDialog.close()"/>
+				<PushButton buttonData="Cancel" ButtonPressListener.buttonPressed="questionDialog.close()"/>
+				<PushButton bxml:id="questionDialogSaveButton" buttonData="Save" />
 			</BoxPane>
 		</TablePane.Row>
 	</TablePane>
