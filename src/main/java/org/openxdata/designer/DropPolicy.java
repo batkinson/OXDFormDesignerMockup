@@ -2,7 +2,6 @@ package org.openxdata.designer;
 
 import org.apache.pivot.collections.List;
 import org.apache.pivot.collections.Sequence;
-import org.openxdata.designer.util.Form;
 import org.openxdata.designer.util.Page;
 import org.openxdata.designer.util.Question;
 
@@ -14,10 +13,9 @@ public class DropPolicy {
 			return false;
 
 		if (source instanceof Question)
-			return target instanceof Page || target instanceof Question;
-
-		if (source instanceof Page)
-			return target instanceof Form;
+			return (target instanceof Page && ((Page) target)
+					.indexOf((Question) source) == -1)
+					|| target instanceof Question;
 
 		return false;
 	}
