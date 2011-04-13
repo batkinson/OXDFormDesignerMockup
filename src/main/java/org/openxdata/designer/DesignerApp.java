@@ -16,6 +16,7 @@ import org.apache.pivot.beans.BXML;
 import org.apache.pivot.beans.BXMLSerializer;
 import org.apache.pivot.collections.ArrayList;
 import org.apache.pivot.collections.HashMap;
+import org.apache.pivot.collections.List;
 import org.apache.pivot.collections.Map;
 import org.apache.pivot.collections.Sequence;
 import org.apache.pivot.io.FileList;
@@ -56,7 +57,7 @@ public class DesignerApp implements Application {
 
 	public static final String LANGUAGE_KEY = "language";
 	public static final String APPLICATION_KEY = "application";
-	
+
 	@BXML
 	private TreeView formTree;
 
@@ -157,30 +158,54 @@ public class DesignerApp implements Application {
 		DropAction dropAction = null;
 
 		try {
-			FileList fileList = dragContent.getFileList();
-			if (fileList.getLength() == 1) {
-				File file = fileList.get(0);
+			if (dragContent.containsValue("targetPath")) {
 
-				FileInputStream fileInputStream = null;
-				try {
+				@SuppressWarnings("unchecked")
+				List<Object> treeData = (List<Object>) designTree.getTreeData();
+
+				Object draggedObject = dragContent.getValue("node");
+
+				Sequence.Tree.Path targetPath = (Sequence.Tree.Path) dragContent
+						.getValue("targetPath");
+				Object targetObject = Sequence.Tree.get(treeData, targetPath);
+				Sequence.Tree.Path targetParentPath = new Sequence.Tree.Path(
+						targetPath, targetPath.getLength() - 1);
+
+				Sequence.Tree.remove(treeData, draggedObject);
+
+				if (targetObject instanceof List)
+					Sequence.Tree.add(treeData, draggedObject, targetPath);
+				else
+					Sequence.Tree.insert(treeData, draggedObject,
+							targetParentPath,
+							targetPath.get(targetPath.getLength() - 1) + 1);
+
+			} else if (dragContent.containsFileList()) {
+				FileList fileList = dragContent.getFileList();
+				if (fileList.getLength() == 1) {
+					File file = fileList.get(0);
+
+					FileInputStream fileInputStream = null;
 					try {
-						fileInputStream = new FileInputStream(file);
-						setDocument(fileInputStream);
-					} finally {
-						if (fileInputStream != null) {
-							fileInputStream.close();
+						try {
+							fileInputStream = new FileInputStream(file);
+							setDocument(fileInputStream);
+						} finally {
+							if (fileInputStream != null) {
+								fileInputStream.close();
+							}
 						}
+					} catch (Exception exception) {
+						Prompt.prompt(exception.getMessage(), window);
 					}
-				} catch (Exception exception) {
-					Prompt.prompt(exception.getMessage(), window);
+
+					window.setTitle((String) resources.get("title") + "-"
+							+ file.getName());
+
+					dropAction = DropAction.COPY;
+				} else {
+					Prompt.prompt("Multiple files not supported.", window);
 				}
-
-				window.setTitle((String) resources.get("title") + "-"
-						+ file.getName());
-
-				dropAction = DropAction.COPY;
-			} else {
-				Prompt.prompt("Multiple files not supported.", window);
 			}
 		} catch (IOException exception) {
 			Prompt.prompt(exception.getMessage(), window);

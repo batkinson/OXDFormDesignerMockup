@@ -96,7 +96,7 @@
 			<left>
 				<Border styles="{color:10, padding:6}">
 					<ScrollPane horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
-						<TreeView bxml:id="designTree" dropTarget="$formTreeDropTarget">
+						<TreeView bxml:id="designTree" dropTarget="$formTreeDropTarget" dragSource="$designTreeDragSource">
 									<nodeRenderer>
 										<designtree:NodeRenderer/>
 									</nodeRenderer>
