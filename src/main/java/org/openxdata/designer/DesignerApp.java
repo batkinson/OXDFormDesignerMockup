@@ -147,7 +147,7 @@ public class DesignerApp implements Application {
 				xml = clipboardContent.getText();
 				ByteArrayInputStream is = new ByteArrayInputStream(
 						xml.getBytes());
-				setDocument(is);
+				importFormDefinition(is);
 			} catch (Exception exception) {
 				Prompt.prompt(exception.getMessage(), window);
 			}
@@ -230,7 +230,7 @@ public class DesignerApp implements Application {
 					try {
 						try {
 							fileInputStream = new FileInputStream(file);
-							setDocument(fileInputStream);
+							importFormDefinition(fileInputStream);
 						} finally {
 							if (fileInputStream != null) {
 								fileInputStream.close();
@@ -255,8 +255,8 @@ public class DesignerApp implements Application {
 		return dropAction;
 	}
 
-	private void setDocument(InputStream documentStream) throws IOException,
-			SerializationException {
+	private void importFormDefinition(InputStream documentStream)
+			throws IOException, SerializationException {
 
 		// Remove prompt decorator
 		if (promptDecorator != null) {
@@ -274,9 +274,14 @@ public class DesignerApp implements Application {
 			sb.append(line);
 		}
 
+		String xform = sb.toString();
+		setXForm(xform);
+		setDesign(xform);
+	}
+
+	private void setXForm(String xformXml) throws SerializationException {
 		XMLSerializer xs = new XMLSerializer();
-		Element document = (Element) xs.readObject(new StringReader(sb
-				.toString()));
+		Element document = (Element) xs.readObject(new StringReader(xformXml));
 
 		ArrayList<Element> xmlData = new ArrayList<Element>();
 		xmlData.add(document);
@@ -285,8 +290,11 @@ public class DesignerApp implements Application {
 		Sequence.Tree.Path path = new Sequence.Tree.Path(0);
 		formTree.expandBranch(path);
 		formTree.setSelectedPath(path);
+	}
 
-		StringReader xmlReader = new StringReader(sb.toString());
+	private void setDesign(String xformsXml) {
+		Sequence.Tree.Path path;
+		StringReader xmlReader = new StringReader(xformsXml);
 		FormDef formDef = EpihandyXform.fromXform2FormDef(xmlReader);
 		Form form = new Form(formDef);
 		ArrayList<Form> designData = new ArrayList<Form>();
