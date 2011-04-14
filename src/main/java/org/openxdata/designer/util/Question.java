@@ -67,17 +67,15 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		Vector<PageElement> elements = new Vector<PageElement>();
 		if (isQuestionList()) {
 			RepeatQtnsDef repeat = getRepeatQtnsDef();
+			if (repeat == null)
+				setRepeatQtnsDef(repeat = new RepeatQtnsDef());
 			elements = (Vector<PageElement>) repeat.getQuestions();
-			if (elements == null) {
-				elements = new Vector<PageElement>();
-				repeat.setQuestions(elements);
-			}
+			if (elements == null)
+				repeat.setQuestions(elements = new Vector<PageElement>());
 		} else if (isStaticOptionList()) {
 			elements = (Vector<PageElement>) getOptions();
-			if (elements == null) {
-				elements = new Vector<PageElement>();
-				setOptions(elements);
-			}
+			if (elements == null)
+				setOptions(elements = new Vector<PageElement>());
 		}
 
 		return elements;

@@ -156,6 +156,29 @@ public class DesignerApp implements Application {
 		}
 	}
 
+	public Sequence.Tree.Path adjustPathForRemovedSibling(
+			Sequence.Tree.Path dropped, Sequence.Tree.Path target) {
+
+		// No adjustment needed unless we're moving a sibling of a descendant.
+		if (target.getLength() < dropped.getLength())
+			return target;
+
+		int maxDepth = dropped.getLength() - 1;
+		for (int depth = 0; depth < maxDepth; depth++) {
+			if (dropped.get(depth) != target.get(depth))
+				return target;
+		}
+
+		// If we get here, depth == maxDepth, just need to see if prior sibling
+		if (dropped.get(maxDepth) < target.get(maxDepth)) {
+			Sequence.Tree.Path adjustedTarget = new Sequence.Tree.Path(target);
+			adjustedTarget.update(maxDepth, target.get(maxDepth) - 1);
+			return adjustedTarget;
+		}
+
+		return target;
+	}
+
 	public DropAction drop(Manifest dragContent) {
 		DropAction dropAction = null;
 
@@ -168,8 +191,6 @@ public class DesignerApp implements Application {
 				Object draggedObject = dragContent.getValue("node");
 				Sequence.Tree.Path draggedPath = (Sequence.Tree.Path) dragContent
 						.getValue("path");
-				Sequence.Tree.Path draggedParentPath = new Sequence.Tree.Path(
-						draggedPath, draggedPath.getLength() - 1);
 
 				Sequence.Tree.Path targetPath = (Sequence.Tree.Path) dragContent
 						.getValue("targetPath");
@@ -187,25 +208,15 @@ public class DesignerApp implements Application {
 								.isQuestionList())
 						|| (targetObject instanceof List && !(targetObject instanceof Question));
 
+				// Fix target when preceding sibling at any depth is removed.
+				targetPath = adjustPathForRemovedSibling(draggedPath,
+						targetPath);
+
 				if (acceptsAdd)
 					Sequence.Tree.add(treeData, draggedObject, targetPath);
 				else {
 					int insertLocation = targetPath
 							.get(targetPath.getLength() - 1) + 1;
-
-					// Shuffle down by one, if removal shortened target list
-					int draggedIndex = draggedPath
-							.get(draggedPath.getLength() - 1);
-					int targetIndex = targetPath
-							.get(targetPath.getLength() - 1);
-
-					// Class doesn't implement equals properly.
-					boolean sharedParent = targetParentPath.toString().equals(
-							draggedParentPath.toString());
-
-					if (sharedParent && draggedIndex <= targetIndex)
-						insertLocation -= 1;
-
 					Sequence.Tree.insert(treeData, draggedObject,
 							targetParentPath, insertLocation);
 				}

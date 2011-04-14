@@ -43,6 +43,10 @@ public class DropPolicy {
 		if (sourcePath == null || targetPath == null)
 			return false;
 
+		// Don't allow dropping a tree part of itself (unsure what this means)
+		if (Sequence.Tree.isDescendant(sourcePath, targetPath))
+			return false;
+
 		Object sourceObject = Sequence.Tree.get(treeData, sourcePath);
 		Object targetObject = Sequence.Tree.get(treeData, targetPath);
 		return allowDrop(sourceObject, targetObject);
