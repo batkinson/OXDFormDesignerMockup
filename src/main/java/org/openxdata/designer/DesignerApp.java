@@ -182,7 +182,7 @@ public class DesignerApp implements Application {
 				boolean acceptsAdd = (draggedObject instanceof Option
 						&& targetObject instanceof Question && ((Question) targetObject)
 						.isStaticOptionList())
-						|| (draggedObject instanceof Option
+						|| (draggedObject instanceof Question
 								&& targetObject instanceof Question && ((Question) targetObject)
 								.isQuestionList())
 						|| (targetObject instanceof List && !(targetObject instanceof Question));
