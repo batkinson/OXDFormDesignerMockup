@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<designer:OptionDialog bxml:id="optionDialog" title="%optionDialogTitle"
+	xmlns:bxml="http://pivot.apache.org/bxml"
+	xmlns:designer="org.openxdata.designer"
+	xmlns:content="org.apache.pivot.wtk.content"
+	xmlns="org.apache.pivot.wtk">
+	<TablePane preferredWidth="320" preferredHeight="210">
+		<columns>
+			<TablePane.Column width="1*"/>
+		</columns>
+		<TablePane.Row height="1*">
+			<Form>
+				<Form.Section>
+					<BoxPane Form.label="%optionIdLabel">
+						<Label bxml:id="optionId" textKey="id" />
+					</BoxPane>
+					<BoxPane Form.label="%optionTextLabel" >
+						<TextInput bxml:id="optionText" textKey="text" />
+					</BoxPane>
+					<BoxPane Form.label="%optionVariableNameLabel" >
+						<TextInput bxml:id="optionVariableName" textKey="variableName" />
+					</BoxPane>
+				</Form.Section>
+			</Form>
+		</TablePane.Row>
+		<TablePane.Row height="-1">
+			<BoxPane styles="{horizontalAlignment:'right'}">
+				<PushButton buttonData="Cancel" ButtonPressListener.buttonPressed="optionDialog.close()"/>
+				<PushButton bxml:id="optionDialogSaveButton" buttonData="Save" />
+			</BoxPane>
+		</TablePane.Row>
+	</TablePane>
+</designer:OptionDialog>

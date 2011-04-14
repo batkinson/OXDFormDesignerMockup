@@ -12,6 +12,7 @@ import org.apache.pivot.wtk.Menu.Section;
 import org.apache.pivot.wtk.MenuBar;
 import org.apache.pivot.wtk.TreeView;
 import org.openxdata.designer.util.Form;
+import org.openxdata.designer.util.Option;
 import org.openxdata.designer.util.Page;
 import org.openxdata.designer.util.Question;
 
@@ -25,6 +26,9 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 
 	@BXML
 	private Dialog questionDialog;
+
+	@BXML
+	private Dialog optionDialog;
 
 	public void configureMenuBar(Component component, MenuBar menuBar) {
 	}
@@ -128,11 +132,27 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				final Question question = (Question) clickedObject;
 
 				Menu.Item removeQuestionItem = new Menu.Item("Remove Question");
+				Menu.Item newQuestionItem = new Menu.Item("New Question");
+				Menu.Item newOptionItem = new Menu.Item("New Option");
 				Menu.Item propertiesItem = new Menu.Item("Properties...");
 
 				removeQuestionItem.setAction(new Action() {
 					public void perform(Component source) {
 						questionList.remove(question);
+					}
+				});
+
+				newQuestionItem.setAction(new Action() {
+					@Override
+					public void perform(Component source) {
+						question.add(new Question());
+					}
+				});
+
+				newOptionItem.setAction(new Action() {
+					@Override
+					public void perform(Component source) {
+						question.add(new Option());
 					}
 				});
 
@@ -148,6 +168,37 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				});
 
 				section.add(removeQuestionItem);
+				if (question.isQuestionList())
+					section.add(newQuestionItem);
+				if (question.isStaticOptionList())
+					section.add(newOptionItem);
+				section.add(propertiesItem);
+			} else if (clickedObject instanceof Option) {
+
+				@SuppressWarnings("unchecked")
+				final List<Option> optionList = (List<Option>) clickedParent;
+				final Option option = (Option) clickedObject;
+
+				Menu.Item removeOptionItem = new Menu.Item("Remove Option");
+				Menu.Item propertiesItem = new Menu.Item("Properties...");
+
+				removeOptionItem.setAction(new Action() {
+					public void perform(Component source) {
+						optionList.remove(option);
+					}
+				});
+
+				propertiesItem.setAction(new Action() {
+					@Override
+					public void perform(Component source) {
+						optionDialog.getUserData().put("activeOption", option);
+						optionDialog.load(new BeanAdapter(option));
+						optionDialog.open(designTree.getDisplay(),
+								designTree.getWindow());
+					}
+				});
+
+				section.add(removeOptionItem);
 				section.add(propertiesItem);
 			}
 
