@@ -44,6 +44,8 @@
 	questionTypeGpsLabel: "GPS",
 	questionTypeBarcodeLabel: "Barcode",
 	questionTypePhonenumberLabel: "Phonenumber",
-	
-	
+	optionDialogTitle: "Option Properties",
+	optionIdLabel: "Id",
+	optionTextLabel: "Text",
+	optionVariableNameLabel: "Binding",
 }
