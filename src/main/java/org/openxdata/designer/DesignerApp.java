@@ -166,6 +166,10 @@ public class DesignerApp implements Application {
 				List<Object> treeData = (List<Object>) designTree.getTreeData();
 
 				Object draggedObject = dragContent.getValue("node");
+				Sequence.Tree.Path draggedPath = (Sequence.Tree.Path) dragContent
+						.getValue("path");
+				Sequence.Tree.Path draggedParentPath = new Sequence.Tree.Path(
+						draggedPath, draggedPath.getLength() - 1);
 
 				Sequence.Tree.Path targetPath = (Sequence.Tree.Path) dragContent
 						.getValue("targetPath");
@@ -185,10 +189,26 @@ public class DesignerApp implements Application {
 
 				if (acceptsAdd)
 					Sequence.Tree.add(treeData, draggedObject, targetPath);
-				else
+				else {
+					int insertLocation = targetPath
+							.get(targetPath.getLength() - 1) + 1;
+
+					// Shuffle down by one, if removal shortened target list
+					int draggedIndex = draggedPath
+							.get(draggedPath.getLength() - 1);
+					int targetIndex = targetPath
+							.get(targetPath.getLength() - 1);
+
+					// Class doesn't implement equals properly.
+					boolean sharedParent = targetParentPath.toString().equals(
+							draggedParentPath.toString());
+
+					if (sharedParent && draggedIndex <= targetIndex)
+						insertLocation -= 1;
+
 					Sequence.Tree.insert(treeData, draggedObject,
-							targetParentPath,
-							targetPath.get(targetPath.getLength() - 1) + 1);
+							targetParentPath, insertLocation);
+				}
 
 			} else if (dragContent.containsFileList()) {
 				FileList fileList = dragContent.getFileList();
