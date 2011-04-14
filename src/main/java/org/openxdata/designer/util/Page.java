@@ -12,7 +12,7 @@ import org.apache.pivot.util.ListenerList;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.QuestionDef;
 
-public class Page extends org.fcitmuk.epihandy.PageDef implements FormElement,
+public class Page extends org.fcitmuk.epihandy.PageDef implements
 		List<Question> {
 
 	public Page() {

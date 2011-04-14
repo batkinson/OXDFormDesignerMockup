@@ -2,6 +2,7 @@ package org.openxdata.designer;
 
 import org.apache.pivot.collections.List;
 import org.apache.pivot.collections.Sequence;
+import org.openxdata.designer.util.Option;
 import org.openxdata.designer.util.Page;
 import org.openxdata.designer.util.Question;
 
@@ -12,10 +13,26 @@ public class DropPolicy {
 		if (source == null || target == null)
 			return false;
 
-		if (source instanceof Question)
-			return (target instanceof Page && ((Page) target)
-					.indexOf((Question) source) == -1)
-					|| target instanceof Question;
+		if (source == target)
+			return false;
+
+		if (source instanceof Question) {
+			if (target instanceof Page) {
+				Page targetPage = (Page) target;
+				return targetPage.indexOf((Question) source) == -1;
+			} else if (target instanceof Question) {
+				Question targetQuestion = (Question) target;
+				return targetQuestion.indexOf((Question) source) == -1;
+			}
+		} else if (source instanceof Option) {
+			if (target instanceof Question) {
+				Question targetQuestion = (Question) target;
+				return targetQuestion.isStaticOptionList()
+						&& targetQuestion.indexOf((Option) source) == -1;
+			} else if (target instanceof Option) {
+				return true;
+			}
+		}
 
 		return false;
 	}

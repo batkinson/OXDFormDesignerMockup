@@ -81,7 +81,8 @@ var designTreeDragSource = new DragSource() {
     beginDrag:
     function(component, x, y) {
         var obj = designTree.getSelectedNode();
-        return obj instanceof Page || obj instanceof Question;
+        return obj instanceof Page || obj instanceof Question 
+            || obj instanceof Option;
     },
 
     endDrag:

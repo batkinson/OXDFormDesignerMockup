@@ -8,6 +8,7 @@ import org.apache.pivot.wtk.Label;
 import org.apache.pivot.wtk.TreeView;
 import org.apache.pivot.wtk.TreeView.NodeCheckState;
 import org.openxdata.designer.util.Form;
+import org.openxdata.designer.util.Option;
 import org.openxdata.designer.util.Page;
 import org.openxdata.designer.util.Question;
 
@@ -33,6 +34,9 @@ public class NodeRenderer extends Label implements TreeView.NodeRenderer {
 			} else if (node instanceof Question) {
 				Question question = (Question) node;
 				text.append(question.getText());
+			} else if (node instanceof Option) {
+				Option option = (Option) node;
+				text.append(option.getText());
 			} else
 				throw new IllegalArgumentException(
 						"Unrecognized tree node type: "

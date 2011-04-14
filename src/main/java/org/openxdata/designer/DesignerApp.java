@@ -46,6 +46,8 @@ import org.apache.pivot.xml.XMLSerializer;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.xform.EpihandyXform;
 import org.openxdata.designer.util.Form;
+import org.openxdata.designer.util.Option;
+import org.openxdata.designer.util.Question;
 
 /**
  * The main entry point of the form designer application.
@@ -173,7 +175,15 @@ public class DesignerApp implements Application {
 
 				Sequence.Tree.remove(treeData, draggedObject);
 
-				if (targetObject instanceof List)
+				boolean acceptsAdd = (draggedObject instanceof Option
+						&& targetObject instanceof Question && ((Question) targetObject)
+						.isStaticOptionList())
+						|| (draggedObject instanceof Option
+								&& targetObject instanceof Question && ((Question) targetObject)
+								.isQuestionList())
+						|| (targetObject instanceof List && !(targetObject instanceof Question));
+
+				if (acceptsAdd)
 					Sequence.Tree.add(treeData, draggedObject, targetPath);
 				else
 					Sequence.Tree.insert(treeData, draggedObject,
