@@ -46,6 +46,23 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		}
 	}
 
+	@Override
+	public void setType(byte type) {
+
+		boolean containsList = isQuestionList() || isStaticOptionList();
+		super.setType(type);
+		boolean containsListAfter = isQuestionList() || isStaticOptionList();
+
+		// Need check for null because we're called in super constructor
+		if (listenerList != null) {
+			if (containsList && !containsListAfter)
+				listenerList.listCleared(this);
+			else if (!containsList && containsListAfter)
+				for (int i = 0; i < getLength(); i++)
+					listenerList.itemInserted(this, i);
+		}
+	}
+
 	public boolean isQuestionList() {
 		byte questionType = getType();
 		return questionType == QTN_TYPE_REPEAT;
