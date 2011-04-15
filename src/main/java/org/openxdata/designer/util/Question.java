@@ -16,6 +16,15 @@ import org.fcitmuk.epihandy.RepeatQtnsDef;
 public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		List<PageElement>, PageElement {
 
+	// We store here to be able to preserve them... QuestionDef 'optimizes'
+	RepeatQtnsDef repeatQuestions = new RepeatQtnsDef();
+	Vector<Option> options = new Vector<Option>();
+
+	{
+		// Ensure the repeat's nested vector isn't null
+		repeatQuestions.setQuestions(new Vector<Question>());
+	}
+
 	public Question() {
 		setText("Unnamed Question");
 	}
@@ -24,7 +33,7 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		super(questionDef);
 
 		if (isQuestionList()) {
-			RepeatQtnsDef repeatDef = getRepeatQtnsDef();
+			RepeatQtnsDef repeatDef = super.getRepeatQtnsDef();
 			if (repeatDef != null) {
 				@SuppressWarnings("unchecked")
 				Vector<Question> nestedQuestions = (Vector<Question>) repeatDef
@@ -34,23 +43,48 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 					Question question = new Question(nestedQuestionDef);
 					nestedQuestions.set(i, question);
 				}
+				this.repeatQuestions.setQuestions(nestedQuestions);
 			}
 		} else if (isStaticOptionList()) {
 			@SuppressWarnings("unchecked")
-			Vector<OptionDef> options = (Vector<OptionDef>) getOptions();
+			Vector<Option> options = (Vector<Option>) super.getOptions();
 			for (int i = 0; i < options.size(); i++) {
 				OptionDef optionDef = options.get(i);
 				Option option = new Option(optionDef);
 				options.set(i, option);
 			}
+			this.options = options;
 		}
+	}
+
+	@Override
+	public RepeatQtnsDef getRepeatQtnsDef() {
+		return repeatQuestions;
+	}
+
+	@Override
+	public Vector<? extends OptionDef> getOptions() {
+		return options;
+	}
+
+	private void setOptionsByType() {
+		if (isQuestionList())
+			setRepeatQtnsDef(this.repeatQuestions);
+		else if (isStaticOptionList())
+			setOptions(this.options);
 	}
 
 	@Override
 	public void setType(byte type) {
 
+		byte origType = getType();
+		Vector<PageElement> origList = getElements();
 		boolean containsList = isQuestionList() || isStaticOptionList();
+
 		super.setType(type);
+
+		setOptionsByType();
+
 		boolean containsListAfter = isQuestionList() || isStaticOptionList();
 
 		// Need check for null because we're called in super constructor
@@ -60,6 +94,26 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 			else if (!containsList && containsListAfter)
 				for (int i = 0; i < getLength(); i++)
 					listenerList.itemInserted(this, i);
+			else if (containsList && containsListAfter && origType != getType()) {
+				if (origList.size() >= getLength()) {
+					for (int i = 0; i < getLength(); i++)
+						listenerList.itemUpdated(this, i, origList.get(i));
+					// Original list is larger or equal in size of current list
+					Sequence<PageElement> removedItems = new ArrayList<PageElement>();
+					for (int i = getLength(); i < origList.size(); i++)
+						removedItems.add(origList.get(i));
+					if (removedItems.getLength() > 0)
+						listenerList.itemsRemoved(this, getLength(),
+								removedItems);
+				} else {
+					// Original list is smaller than current
+					for (int i = 0; i < origList.size(); i++)
+						listenerList.itemUpdated(this, i, origList.get(i));
+					for (int i = origList.size(); i < getLength(); i++)
+						listenerList.itemInserted(this, i);
+				}
+
+			}
 		}
 	}
 
@@ -83,18 +137,10 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 	Vector<PageElement> getElements() {
 		Vector<PageElement> elements = new Vector<PageElement>();
 		if (isQuestionList()) {
-			RepeatQtnsDef repeat = getRepeatQtnsDef();
-			if (repeat == null)
-				setRepeatQtnsDef(repeat = new RepeatQtnsDef());
-			elements = (Vector<PageElement>) repeat.getQuestions();
-			if (elements == null)
-				repeat.setQuestions(elements = new Vector<PageElement>());
+			elements = getRepeatQtnsDef().getQuestions();
 		} else if (isStaticOptionList()) {
 			elements = (Vector<PageElement>) getOptions();
-			if (elements == null)
-				setOptions(elements = new Vector<PageElement>());
 		}
-
 		return elements;
 	}
 
