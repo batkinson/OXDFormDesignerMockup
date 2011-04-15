@@ -48,4 +48,5 @@
 	optionIdLabel: "Id",
 	optionTextLabel: "Text",
 	optionVariableNameLabel: "Binding",
+	dynamicOptionDialogTitle: "Dynamic Options",
 }

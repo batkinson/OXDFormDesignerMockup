@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Dialog bxml:id="dynamicOptionDialog" title="%dynamicOptionDialogTitle"
+	xmlns:bxml="http://pivot.apache.org/bxml"
+	xmlns:designer="org.openxdata.designer"
+	xmlns:content="org.apache.pivot.wtk.content"
+	xmlns="org.apache.pivot.wtk">
+	<TablePane preferredWidth="320" preferredHeight="210">
+		<columns>
+			<TablePane.Column width="1*"/>
+		</columns>
+		<TablePane.Row height="1*">
+			<Form>
+			</Form>
+		</TablePane.Row>
+		<TablePane.Row height="-1">
+			<BoxPane styles="{horizontalAlignment:'right'}">
+				<PushButton buttonData="Cancel" ButtonPressListener.buttonPressed="dynamicOptionDialog.close()"/>
+			</BoxPane>
+		</TablePane.Row>
+	</TablePane>
+</Dialog>

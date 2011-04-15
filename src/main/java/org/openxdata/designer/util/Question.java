@@ -16,6 +16,13 @@ import org.fcitmuk.epihandy.RepeatQtnsDef;
 public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		List<PageElement>, PageElement {
 
+	private static Vector<PageElement> DYN_PROXY_LIST;
+
+	static {
+		DYN_PROXY_LIST = new Vector<PageElement>();
+		DYN_PROXY_LIST.add(new DynamicOptionProxy());
+	}
+
 	// We store here to be able to preserve them... QuestionDef 'optimizes'
 	RepeatQtnsDef repeatQuestions = new RepeatQtnsDef();
 	Vector<Option> options = new Vector<Option>();
@@ -79,13 +86,14 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 
 		byte origType = getType();
 		Vector<PageElement> origList = getElements();
-		boolean containsList = isQuestionList() || isStaticOptionList();
-
+		boolean containsList = isQuestionList() || isStaticOptionList()
+				|| isDynamicOptionList();
 		super.setType(type);
 
 		setOptionsByType();
 
-		boolean containsListAfter = isQuestionList() || isStaticOptionList();
+		boolean containsListAfter = isQuestionList() || isStaticOptionList()
+				|| isDynamicOptionList();
 
 		// Need check for null because we're called in super constructor
 		if (listenerList != null) {
@@ -140,6 +148,8 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 			elements = getRepeatQtnsDef().getQuestions();
 		} else if (isStaticOptionList()) {
 			elements = (Vector<PageElement>) getOptions();
+		} else if (isDynamicOptionList()) {
+			elements = DYN_PROXY_LIST;
 		}
 		return elements;
 	}

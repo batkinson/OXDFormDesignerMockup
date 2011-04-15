@@ -11,6 +11,7 @@
 		<bxml:include bxml:id="pageDialog" src="pageDialog.bxml"/>
 		<bxml:include bxml:id="questionDialog" src="questionDialog.bxml"/>
 		<bxml:include bxml:id="optionDialog" src="optionDialog.bxml"/>
+		<bxml:include bxml:id="dynamicOptionDialog" src="dynamicOptionDialog.bxml"/>
     </bxml:define>
     
 	<bxml:script src="dragdrop.js" />
