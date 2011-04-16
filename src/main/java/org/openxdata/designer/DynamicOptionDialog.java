@@ -82,7 +82,6 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 		}
 
 		// Construct map of possible values for parent
-
 		java.util.Collection<OptionDef> possibleParentValues = new java.util.ArrayList<OptionDef>();
 		if (parentQuestion.isDynamicOptionList()) {
 			for (Map.Entry<Short, Vector<OptionDef>> entry : parentPcOpts
@@ -96,16 +95,10 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 		parentQuestionLabel.setText("Options depend on values of "
 				+ parentQuestion.getText());
 
-		// This is ok for questions with static lists, not dynamic ones
 		for (Map.Entry<Short, Vector<OptionDef>> entry : pcOpts.entrySet()) {
 			for (OptionDef option : possibleParentValues) {
 				if (option.getId() == entry.getKey()) {
-					Option opt;
-					if (option instanceof Option) // Fix when contructing form
-						opt = (Option) option;
-					else
-						opt = new Option(option);
-					DynamicOption dynOption = new DynamicOption(opt);
+					DynamicOption dynOption = new DynamicOption((Option) option);
 					for (OptionDef value : entry.getValue())
 						dynOption.add(new Option(value));
 					treeData.add(dynOption);

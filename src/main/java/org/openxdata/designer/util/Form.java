@@ -1,7 +1,9 @@
 package org.openxdata.designer.util;
 
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.pivot.collections.ArrayList;
@@ -9,7 +11,9 @@ import org.apache.pivot.collections.List;
 import org.apache.pivot.collections.ListListener;
 import org.apache.pivot.collections.Sequence;
 import org.apache.pivot.util.ListenerList;
+import org.fcitmuk.epihandy.DynamicOptionDef;
 import org.fcitmuk.epihandy.FormDef;
+import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.PageDef;
 
 /**
@@ -19,17 +23,30 @@ import org.fcitmuk.epihandy.PageDef;
  */
 public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 
+	@SuppressWarnings("unchecked")
 	public Form(FormDef formDef) {
 
 		super(formDef);
 
 		// Patch up pages into alternative model representation
-		@SuppressWarnings("unchecked")
 		Vector<PageDef> pages = (Vector<PageDef>) getPages();
 		for (int i = 0; i < pages.size(); i++) {
 			PageDef pageDef = pages.elementAt(i);
 			Page page = new Page(pageDef);
 			pages.setElementAt(page, i);
+		}
+
+		// Patch up dynamic options
+		Hashtable<Short, DynamicOptionDef> dynOptionMap = (Hashtable<Short, DynamicOptionDef>) getDynamicOptions();
+		for (Map.Entry<Short, DynamicOptionDef> entry : dynOptionMap.entrySet()) {
+			Hashtable<Short, Vector<OptionDef>> optionMap = entry.getValue()
+					.getParentToChildOptions();
+			for (Map.Entry<Short, Vector<OptionDef>> optionEntry : optionMap
+					.entrySet()) {
+				Vector<OptionDef> options = optionEntry.getValue();
+				for (int i = 0; i < options.size(); i++)
+					options.set(i, new Option(options.get(i)));
+			}
 		}
 
 		// TODO: Patch up other references
