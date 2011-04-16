@@ -11,6 +11,7 @@ import org.apache.pivot.wtk.Menu;
 import org.apache.pivot.wtk.Menu.Section;
 import org.apache.pivot.wtk.MenuBar;
 import org.apache.pivot.wtk.TreeView;
+import org.openxdata.designer.DynamicOptionDialog;
 import org.openxdata.designer.util.DynamicOptionProxy;
 import org.openxdata.designer.util.Form;
 import org.openxdata.designer.util.Option;
@@ -32,7 +33,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 	private Dialog optionDialog;
 
 	@BXML
-	private Dialog dynamicOptionDialog;
+	private DynamicOptionDialog dynamicOptionDialog;
 
 	public void configureMenuBar(Component component, MenuBar menuBar) {
 	}
@@ -206,6 +207,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				section.add(propertiesItem);
 			} else if (clickedObject instanceof DynamicOptionProxy) {
 
+				final Form form = (Form) treeData.get(0);
 				final Question parentQuestion = (Question) clickedParent;
 
 				Menu.Item manageOptionsItem = new Menu.Item("Manage Options...");
@@ -213,8 +215,11 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				manageOptionsItem.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
+						dynamicOptionDialog.getUserData().put("activeForm",
+								form);
 						dynamicOptionDialog.getUserData().put("activeQuestion",
 								parentQuestion);
+						dynamicOptionDialog.updateDialog();
 						dynamicOptionDialog.open(designTree.getDisplay(),
 								designTree.getWindow());
 					}

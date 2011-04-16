@@ -1,21 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Dialog bxml:id="dynamicOptionDialog" title="%dynamicOptionDialogTitle"
+<designer:DynamicOptionDialog bxml:id="dynamicOptionDialog" title="%dynamicOptionDialogTitle"
 	xmlns:bxml="http://pivot.apache.org/bxml"
 	xmlns:designer="org.openxdata.designer"
+	xmlns:dynopttree="org.openxdata.designer.dynopttree"
 	xmlns:content="org.apache.pivot.wtk.content"
 	xmlns="org.apache.pivot.wtk">
 	<TablePane preferredWidth="320" preferredHeight="210">
 		<columns>
 			<TablePane.Column width="1*"/>
 		</columns>
+		<TablePane.Row height="-1">
+			<Label bxml:id="parentQuestionLabel" />
+		</TablePane.Row>
 		<TablePane.Row height="1*">
-			<Form>
-			</Form>
+			<ScrollPane horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
+				<TreeView bxml:id="dynamicOptionTree">
+					<nodeRenderer>
+						<dynopttree:NodeRenderer />
+					</nodeRenderer>
+				</TreeView>
+			</ScrollPane>
 		</TablePane.Row>
 		<TablePane.Row height="-1">
 			<BoxPane styles="{horizontalAlignment:'right'}">
 				<PushButton buttonData="Cancel" ButtonPressListener.buttonPressed="dynamicOptionDialog.close()"/>
+				<PushButton bxml:id="dynamicOptionDialogSaveButton" buttonData="Save" />
 			</BoxPane>
 		</TablePane.Row>
 	</TablePane>
-</Dialog>
+</designer:DynamicOptionDialog>
