@@ -41,9 +41,42 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 		dynamicOptionDialogSaveButton.setAction(new Action() {
 			@Override
 			public void perform(Component source) {
+				// Save dynamic options to form
+				updateForm();
 				close();
 			}
 		});
+	}
+
+	public void updateForm() {
+		Form form = (Form) getUserData().get("activeForm");
+		Question question = (Question) getUserData().get("activeQuestion");
+		updateForm(form, question);
+	}
+
+	@SuppressWarnings("unchecked")
+	private void updateForm(Form form, Question question) {
+
+		List<DynamicOption> newOptionList = (List<DynamicOption>) dynamicOptionTree
+				.getTreeData();
+
+		Hashtable<Short, DynamicOptionDef> optionMap = (Hashtable<Short, DynamicOptionDef>) form
+				.getDynamicOptions();
+
+		Hashtable<Short, Vector<OptionDef>> pcOpts = null;
+
+		// Locate parent value => child value mapping for this question
+		for (Map.Entry<Short, DynamicOptionDef> entry : optionMap.entrySet()) {
+			if (entry.getValue().getQuestionId() == question.getId()) {
+				pcOpts = (Hashtable<Short, Vector<OptionDef>>) entry.getValue()
+						.getParentToChildOptions();
+			}
+		}
+
+		// Re-populate the dynamic options based on user-manipulated data
+		pcOpts.clear();
+		for (DynamicOption option : newOptionList)
+			pcOpts.put(option.getValue().getId(), option.getOptionVector());
 	}
 
 	public void updateDialog() {

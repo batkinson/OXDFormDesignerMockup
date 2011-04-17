@@ -67,6 +67,9 @@ public class DesignerApp implements Application {
 	private TreeView designTree;
 
 	@BXML
+	private TreeView dynamicOptionTree;
+
+	@BXML
 	private CardPane propertiesCardPane;
 
 	@BXML
@@ -126,6 +129,10 @@ public class DesignerApp implements Application {
 		MenuHandler designMenuHandler = designTree.getMenuHandler();
 		if (designMenuHandler != null)
 			bxmlSerializer.bind(designMenuHandler);
+
+		MenuHandler dynOptMenuHandler = dynamicOptionTree.getMenuHandler();
+		if (dynOptMenuHandler != null)
+			bxmlSerializer.bind(dynOptMenuHandler);
 
 		Label prompt = new Label("Drag or paste XML here");
 		prompt.getStyles().put("horizontalAlignment",

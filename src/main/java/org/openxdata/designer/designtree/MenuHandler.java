@@ -3,6 +3,7 @@ package org.openxdata.designer.designtree;
 import org.apache.pivot.beans.BXML;
 import org.apache.pivot.beans.BeanAdapter;
 import org.apache.pivot.collections.List;
+import org.apache.pivot.collections.Sequence;
 import org.apache.pivot.collections.Sequence.Tree.Path;
 import org.apache.pivot.wtk.Action;
 import org.apache.pivot.wtk.Component;
@@ -46,6 +47,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 
 		final TreeView designTree = (TreeView) component;
 		Path clickedPath = designTree.getNodeAt(y);
+		Path parentPath = new Path(clickedPath, clickedPath.getLength() - 1);
 		List<?> treeData = designTree.getTreeData();
 
 		if (clickedPath != null) {
@@ -59,12 +61,8 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				deepestBranch = nextBranch;
 			}
 
-			// Get the index of the selected item in the deepest branch
-			Integer deepestBranchIndex = clickedPath.get(clickedPath
-					.getLength() - 1);
-
-			Object clickedParent = deepestBranch;
-			Object clickedObject = deepestBranch.get(deepestBranchIndex);
+			Object clickedParent = Sequence.Tree.get(treeData, parentPath);
+			Object clickedObject = Sequence.Tree.get(treeData, clickedPath);
 
 			// TODO: Use localized Strings
 			Section section = new Section();
