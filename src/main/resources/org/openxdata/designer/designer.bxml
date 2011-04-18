@@ -98,30 +98,13 @@
 			<left>
 				<Border styles="{color:10, padding:6}">
 					<ScrollPane horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
-						<TreeView bxml:id="designTree" dropTarget="$formTreeDropTarget" dragSource="$designTreeDragSource">
-									<nodeRenderer>
-										<designtree:NodeRenderer/>
-									</nodeRenderer>
-									<menuHandler>
-										<designtree:MenuHandler/>
-									</menuHandler>
-									<componentKeyListeners>
-										<![CDATA[
-										importPackage(org.apache.pivot.wtk);
-										function keyPressed(component, keyCode, keyLocation) {
-											if (keyCode == Keyboard.KeyCode.V && Keyboard.isPressed(Platform.getCommandModifier())) {
-												application.paste();
-											}
-										}
-										]]>
-									</componentKeyListeners>
-									<!--treeViewSelectionListeners>
-										<![CDATA[
-										function selectedPathsChanged(treeView, previousSelectedPaths) {
-											application.updateProperties();
-										}
-										]]>
-									</treeViewSelectionListeners-->
+						<TreeView bxml:id="designTree" styles="{showEmptyBranchControls:false}" dropTarget="$formTreeDropTarget" dragSource="$designTreeDragSource">
+							<nodeRenderer>
+								<designtree:NodeRenderer/>
+							</nodeRenderer>
+							<menuHandler>
+								<designtree:MenuHandler/>
+							</menuHandler>
 						</TreeView>
 					</ScrollPane>
 				</Border>
