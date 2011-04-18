@@ -52,15 +52,6 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 
 		if (clickedPath != null) {
 
-			List<?> deepestBranch = treeData;
-
-			// Traverse the path until we reach the deepest branch
-			for (int i = 0; i < clickedPath.getLength() - 1; i++) {
-				List<?> nextBranch = (List<?>) deepestBranch.get(clickedPath
-						.get(i));
-				deepestBranch = nextBranch;
-			}
-
 			Object clickedParent = Sequence.Tree.get(treeData, parentPath);
 			Object clickedObject = Sequence.Tree.get(treeData, clickedPath);
 
