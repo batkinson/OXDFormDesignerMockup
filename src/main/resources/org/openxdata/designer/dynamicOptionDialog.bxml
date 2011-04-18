@@ -10,7 +10,10 @@
 			<TablePane.Column width="1*"/>
 		</columns>
 		<TablePane.Row height="-1">
-			<Label bxml:id="parentQuestionLabel" />
+			<BoxPane styles="{horizontalAlignment:'center'}">
+				<Label text="Options depend on value of" />
+				<ListButton bxml:id="parentQuestionListButton" />
+			</BoxPane>
 		</TablePane.Row>
 		<TablePane.Row height="1*">
 			<ScrollPane horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
