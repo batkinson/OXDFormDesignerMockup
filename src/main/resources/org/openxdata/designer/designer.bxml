@@ -105,6 +105,16 @@
 							<menuHandler>
 								<designtree:MenuHandler/>
 							</menuHandler>
+							<componentKeyListeners>
+								<![CDATA[
+								importPackage(org.apache.pivot.wtk);
+								function keyPressed(component, keyCode, keyLocation) {
+									if (keyCode == Keyboard.KeyCode.V && Keyboard.isPressed(Platform.getCommandModifier())) {
+										application.paste();
+									}
+								}
+								]]>
+							</componentKeyListeners>
 						</TreeView>
 					</ScrollPane>
 				</Border>
