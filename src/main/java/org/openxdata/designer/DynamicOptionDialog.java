@@ -48,10 +48,40 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 		});
 	}
 
+	public Form getForm() {
+		return (Form) getUserData().get("activeForm");
+	}
+
+	public Question getQuestion() {
+		return (Question) getUserData().get("activeQuestion");
+	}
+
 	public void updateForm() {
-		Form form = (Form) getUserData().get("activeForm");
-		Question question = (Question) getUserData().get("activeQuestion");
-		updateForm(form, question);
+		updateForm(getForm(), getQuestion());
+	}
+
+	public void updateDialog() {
+		updateDialog(getForm(), getQuestion());
+	}
+
+	private void updateDialog(Form form, Question question) {
+
+		Hashtable<Short, Vector<OptionDef>> pcOpts = getOptionMap(form,
+				question);
+		Question parentQuestion = getParentQuestion(form, question);
+		Hashtable<Short, Vector<OptionDef>> parentPcOpts = getOptionMap(form,
+				parentQuestion);
+
+		java.util.Collection<OptionDef> possibleParentValues = getPossibleValues(
+				parentQuestion, parentPcOpts);
+
+		parentQuestionLabel.setText("Options depend on values of "
+				+ parentQuestion.getText());
+
+		List<DynamicOption> treeData = getOptionValueTree(pcOpts,
+				possibleParentValues);
+
+		dynamicOptionTree.setTreeData(treeData);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -59,19 +89,8 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 
 		List<DynamicOption> newOptionList = (List<DynamicOption>) dynamicOptionTree
 				.getTreeData();
-
-		Hashtable<Short, DynamicOptionDef> optionMap = (Hashtable<Short, DynamicOptionDef>) form
-				.getDynamicOptions();
-
-		Hashtable<Short, Vector<OptionDef>> pcOpts = null;
-
-		// Locate parent value => child value mapping for this question
-		for (Map.Entry<Short, DynamicOptionDef> entry : optionMap.entrySet()) {
-			if (entry.getValue().getQuestionId() == question.getId()) {
-				pcOpts = (Hashtable<Short, Vector<OptionDef>>) entry.getValue()
-						.getParentToChildOptions();
-			}
-		}
+		Hashtable<Short, Vector<OptionDef>> pcOpts = getOptionMap(form,
+				question);
 
 		// Re-populate the dynamic options based on user-manipulated data
 		pcOpts.clear();
@@ -79,55 +98,49 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 			pcOpts.put(option.getValue().getId(), option.getOptionVector());
 	}
 
-	public void updateDialog() {
-		Form form = (Form) getUserData().get("activeForm");
-		Question question = (Question) getUserData().get("activeQuestion");
-		updateDialog(form, question);
-	}
-
 	@SuppressWarnings("unchecked")
-	private void updateDialog(Form form, Question question) {
-		List<DynamicOption> treeData = new ArrayList<DynamicOption>();
+	private Hashtable<Short, Vector<OptionDef>> getOptionMap(Form form,
+			Question question) {
+
+		Hashtable<Short, Vector<OptionDef>> result = null;
 
 		Hashtable<Short, DynamicOptionDef> optionMap = (Hashtable<Short, DynamicOptionDef>) form
 				.getDynamicOptions();
 
-		Hashtable<Short, Vector<OptionDef>> parentPcOpts = null;
-		Hashtable<Short, Vector<OptionDef>> pcOpts = null;
-
-		Question parentQuestion = null;
-
 		// Locate parent value => child value mapping for this question
 		for (Map.Entry<Short, DynamicOptionDef> entry : optionMap.entrySet()) {
 			if (entry.getValue().getQuestionId() == question.getId()) {
-				pcOpts = (Hashtable<Short, Vector<OptionDef>>) entry.getValue()
+				result = (Hashtable<Short, Vector<OptionDef>>) entry.getValue()
 						.getParentToChildOptions();
-				parentQuestion = (Question) form.getQuestion(entry.getKey());
+				break;
 			}
 		}
 
-		// Locate parent value => child mapping for parent question
+		return result;
+	}
+
+	private Question getParentQuestion(Form form, Question question) {
+
+		Question result = null;
+
+		@SuppressWarnings("unchecked")
+		Hashtable<Short, DynamicOptionDef> optionMap = (Hashtable<Short, DynamicOptionDef>) form
+				.getDynamicOptions();
+
 		for (Map.Entry<Short, DynamicOptionDef> entry : optionMap.entrySet()) {
-			if (entry.getValue().getQuestionId() == parentQuestion.getId()) {
-				parentPcOpts = (Hashtable<Short, Vector<OptionDef>>) entry
-						.getValue().getParentToChildOptions();
+			if (entry.getValue().getQuestionId() == question.getId()) {
+				result = (Question) form.getQuestion(entry.getKey());
+				break;
 			}
 		}
 
-		// Construct map of possible values for parent
-		java.util.Collection<OptionDef> possibleParentValues = new java.util.ArrayList<OptionDef>();
-		if (parentQuestion.isDynamicOptionList()) {
-			for (Map.Entry<Short, Vector<OptionDef>> entry : parentPcOpts
-					.entrySet()) {
-				possibleParentValues.addAll(entry.getValue());
-			}
-		} else if (parentQuestion.isStaticOptionList()) {
-			possibleParentValues.addAll(parentQuestion.getOptions());
-		}
+		return result;
+	}
 
-		parentQuestionLabel.setText("Options depend on values of "
-				+ parentQuestion.getText());
-
+	private List<DynamicOption> getOptionValueTree(
+			Hashtable<Short, Vector<OptionDef>> pcOpts,
+			java.util.Collection<OptionDef> possibleParentValues) {
+		List<DynamicOption> treeData = new ArrayList<DynamicOption>();
 		for (Map.Entry<Short, Vector<OptionDef>> entry : pcOpts.entrySet()) {
 			for (OptionDef option : possibleParentValues) {
 				if (option.getId() == entry.getKey()) {
@@ -138,7 +151,22 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 				}
 			}
 		}
+		return treeData;
+	}
 
-		dynamicOptionTree.setTreeData(treeData);
+	private java.util.Collection<OptionDef> getPossibleValues(
+			Question parentQuestion,
+			Hashtable<Short, Vector<OptionDef>> parentPcOpts) {
+		// Construct map of possible values for parent
+		java.util.Collection<OptionDef> possibleParentValues = new java.util.ArrayList<OptionDef>();
+		if (parentQuestion.isDynamicOptionList()) {
+			for (Map.Entry<Short, Vector<OptionDef>> entry : parentPcOpts
+					.entrySet()) {
+				possibleParentValues.addAll(entry.getValue());
+			}
+		} else if (parentQuestion.isStaticOptionList()) {
+			possibleParentValues.addAll(parentQuestion.getOptions());
+		}
+		return possibleParentValues;
 	}
 }
