@@ -17,7 +17,7 @@
     
 	<bxml:script src="dragdrop.js" />
 	
-	<TabPane bxml:id="tabPane">
+	<TabPane bxml:id="tabPane" selectedIndex="1">
 		<SplitPane orientation="horizontal" splitRatio="0.75">
 			<TabPane.tabData>
 				<content:ButtonData text="%xformTab" />
