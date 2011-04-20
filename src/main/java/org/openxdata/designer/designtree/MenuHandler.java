@@ -46,7 +46,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 			int y) {
 
 		final TreeView designTree = (TreeView) component;
-		Path clickedPath = designTree.getNodeAt(y);
+		final Path clickedPath = designTree.getNodeAt(y);
 		List<?> treeData = designTree.getTreeData();
 
 		if (clickedPath != null) {
@@ -68,6 +68,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				newPageItem.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
+						designTree.setBranchExpanded(clickedPath, true);
 						form.addPage();
 					}
 				});
@@ -96,6 +97,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				newQuestionItem.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
+						designTree.setBranchExpanded(clickedPath, true);
 						page.add(new Question());
 					}
 				});
@@ -140,6 +142,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				newQuestionItem.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
+						designTree.setBranchExpanded(clickedPath, true);
 						question.add(new Question());
 					}
 				});
@@ -147,6 +150,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				newOptionItem.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
+						designTree.setBranchExpanded(clickedPath, true);
 						question.add(new Option());
 					}
 				});
