@@ -47,10 +47,11 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 
 		final TreeView designTree = (TreeView) component;
 		Path clickedPath = designTree.getNodeAt(y);
-		Path parentPath = new Path(clickedPath, clickedPath.getLength() - 1);
 		List<?> treeData = designTree.getTreeData();
 
 		if (clickedPath != null) {
+
+			Path parentPath = new Path(clickedPath, clickedPath.getLength() - 1);
 
 			Object clickedParent = Sequence.Tree.get(treeData, parentPath);
 			Object clickedObject = Sequence.Tree.get(treeData, clickedPath);
