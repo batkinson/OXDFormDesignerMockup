@@ -36,6 +36,9 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 	@BXML
 	private DynamicOptionDialog dynamicOptionDialog;
 
+	@BXML
+	private Dialog skipRuleDialog;
+
 	public void configureMenuBar(Component component, MenuBar menuBar) {
 	}
 
@@ -63,6 +66,8 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				final Form form = (Form) clickedObject;
 
 				Menu.Item newPageItem = new Menu.Item("Add Page");
+				Menu.Item manageSkipRules = new Menu.Item(
+						"Manage Skip Rules...");
 				Menu.Item propertiesItem = new Menu.Item("Properties...");
 
 				newPageItem.setAction(new Action() {
@@ -70,6 +75,14 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 					public void perform(Component source) {
 						designTree.setBranchExpanded(clickedPath, true);
 						form.addPage();
+					}
+				});
+
+				manageSkipRules.setAction(new Action() {
+					@Override
+					public void perform(Component source) {
+						skipRuleDialog.open(designTree.getDisplay(),
+								designTree.getWindow());
 					}
 				});
 
@@ -84,6 +97,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				});
 
 				section.add(newPageItem);
+				section.add(manageSkipRules);
 				section.add(propertiesItem);
 			} else if (clickedObject instanceof Page) {
 

@@ -49,4 +49,5 @@
 	optionTextLabel: "Text",
 	optionVariableNameLabel: "Binding",
 	dynamicOptionDialogTitle: "Dynamic Options",
+	skipRuleDialogTitle: "Skip Rules",
 }

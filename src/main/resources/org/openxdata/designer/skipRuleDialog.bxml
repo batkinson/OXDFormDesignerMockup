@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<designer:SkipRuleDialog bxml:id="skipRuleDialog" title="%skipRuleDialogTitle"
+	xmlns:bxml="http://pivot.apache.org/bxml"
+	xmlns:designer="org.openxdata.designer"
+	xmlns:dynopttree="org.openxdata.designer.dynopttree"
+	xmlns:content="org.apache.pivot.wtk.content"
+	xmlns="org.apache.pivot.wtk">
+	<TablePane preferredWidth="320" preferredHeight="210">
+		<columns>
+			<TablePane.Column width="1*"/>
+		</columns>
+		<TablePane.Row height="1*">
+			<Label text="Code Me"/>
+		</TablePane.Row>
+		<TablePane.Row height="-1">
+			<BoxPane styles="{horizontalAlignment:'right'}">
+				<PushButton buttonData="Cancel" ButtonPressListener.buttonPressed="skipRuleDialog.close()"/>
+				<PushButton bxml:id="skipRuleDialogSaveButton" buttonData="Save" />
+			</BoxPane>
+		</TablePane.Row>
+	</TablePane>
+</designer:SkipRuleDialog>
