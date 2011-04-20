@@ -219,11 +219,13 @@ public class DesignerApp implements Application {
 				targetPath = adjustPathForRemovedSibling(draggedPath,
 						targetPath);
 
-				if (acceptsAdd)
+				if (acceptsAdd) {
+					designTree.setBranchExpanded(targetPath, true);
 					Sequence.Tree.add(treeData, draggedObject, targetPath);
-				else {
+				} else {
 					int insertLocation = targetPath
 							.get(targetPath.getLength() - 1) + 1;
+					designTree.setBranchExpanded(targetParentPath, true);
 					Sequence.Tree.insert(treeData, draggedObject,
 							targetParentPath, insertLocation);
 				}
