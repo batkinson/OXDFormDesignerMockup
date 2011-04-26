@@ -15,6 +15,8 @@ import org.fcitmuk.epihandy.DynamicOptionDef;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.PageDef;
+import org.openxdata.designer.idgen.DefaultIdGenerator;
+import org.openxdata.designer.idgen.ScarceIdGenerator;
 
 /**
  * 
@@ -22,6 +24,12 @@ import org.fcitmuk.epihandy.PageDef;
  * 
  */
 public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
+
+	private ScarceIdGenerator idGen = new DefaultIdGenerator(1, Short.MAX_VALUE);
+
+	// Question are assumed unique to the form
+	private ScarceIdGenerator questionIdGen = new DefaultIdGenerator(1,
+			Short.MAX_VALUE);
 
 	@SuppressWarnings("unchecked")
 	public Form(FormDef formDef) {
@@ -32,8 +40,9 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 		Vector<PageDef> pages = (Vector<PageDef>) getPages();
 		for (int i = 0; i < pages.size(); i++) {
 			PageDef pageDef = pages.elementAt(i);
-			Page page = new Page(pageDef);
+			Page page = new Page(questionIdGen, pageDef);
 			pages.setElementAt(page, i);
+			idGen.reserveId(page.getPageNo());
 		}
 
 		// Patch up dynamic options
@@ -57,19 +66,22 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 		@SuppressWarnings("unchecked")
 		Vector<PageDef> pages = (Vector<PageDef>) getPages();
 		synchronized (pages) {
-			int pageNum = pages.size() + 1;
-			Page newPage = new Page("Page" + pageNum, (short) pageNum,
+			short pageId = (short) idGen.nextId();
+			Page newPage = new Page("Page" + pageId, pageId,
 					new Vector<Question>());
+			newPage.setQuestionIdGen(questionIdGen);
 			add(newPage); // Method sends notifications
 		}
 	}
 
 	public int remove(Page item) {
+
 		@SuppressWarnings("unchecked")
 		Vector<Page> pages = (Vector<Page>) getPages();
 		for (int i = 0; i < pages.size(); i++) {
 			if (item.equals(pages.get(i))) {
 				Page removedPage = pages.remove(i);
+				idGen.makeIdAvailable(removedPage.getPageNo());
 				listenerList.itemsRemoved(this, i, new ArrayList<Page>(
 						removedPage));
 				return i;
@@ -130,6 +142,7 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 		synchronized (pages) {
 			index = pages.size();
 			pages.add(item);
+			idGen.reserveId(item.getPageNo());
 			listenerList.itemInserted(this, index);
 			return index;
 		}
@@ -139,6 +152,7 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 		@SuppressWarnings("unchecked")
 		Vector<Page> pages = (Vector<Page>) getPages();
 		pages.insertElementAt(item, index);
+		idGen.reserveId(item.getPageNo());
 		listenerList.itemInserted(this, index);
 	}
 
@@ -148,7 +162,9 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 		Page exiled = null;
 		synchronized (pages) {
 			exiled = pages.get(index);
+			idGen.makeIdAvailable(exiled.getPageNo());
 			pages.setElementAt(item, index);
+			idGen.reserveId(item.getPageNo());
 		}
 		listenerList.itemUpdated(this, index, exiled);
 		return exiled;
@@ -161,6 +177,7 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 		for (int i = 0; i < count && index + i < pages.size(); i++) {
 			Page removedPage = pages.remove(index);
 			removedPages.add(removedPage);
+			idGen.makeIdAvailable(removedPage.getPageNo());
 		}
 		listenerList.itemsRemoved(this, index, removedPages);
 		return removedPages;
@@ -169,6 +186,9 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 	public void clear() {
 		@SuppressWarnings("unchecked")
 		Vector<Page> pages = (Vector<Page>) getPages();
+		for (Page page : this) {
+			idGen.makeIdAvailable(page.getPageNo());
+		}
 		pages.clear();
 	}
 

@@ -11,9 +11,12 @@ import org.apache.pivot.collections.Sequence;
 import org.apache.pivot.util.ListenerList;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.QuestionDef;
+import org.openxdata.designer.idgen.ScarceIdGenerator;
 
 public class Page extends org.fcitmuk.epihandy.PageDef implements
 		List<Question> {
+
+	private ScarceIdGenerator questionIdGen;
 
 	public Page() {
 		this("Unnamed Question", (short) -1, new Vector<Question>());
@@ -23,17 +26,33 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		super(name, pageNo, questions);
 	}
 
-	public Page(PageDef pageDef) {
+	public Page(ScarceIdGenerator idGen, PageDef pageDef) {
 
 		super(pageDef);
+
+		this.questionIdGen = idGen;
 
 		@SuppressWarnings("unchecked")
 		Vector<QuestionDef> questions = (Vector<QuestionDef>) getQuestions();
 		for (int i = 0; i < questions.size(); i++) {
 			QuestionDef questionDef = questions.elementAt(i);
-			Question question = new Question(questionDef);
+			Question question = new Question(questionIdGen, questionDef);
+			short questionId = (short) questionIdGen.nextId();
+			question.setId(questionId);
 			questions.setElementAt(question, i);
+			idGen.reserveId(question.getId());
 		}
+	}
+
+	void setQuestionIdGen(ScarceIdGenerator idGen) {
+		this.questionIdGen = idGen;
+	}
+
+	public void newQuestion() {
+		Question question = new Question();
+		short nextId = (short) questionIdGen.nextId();
+		question.setId(nextId);
+		add(question);
 	}
 
 	public int remove(Question item) {
@@ -42,6 +61,7 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		for (int i = 0; i < questions.size(); i++) {
 			if (item.equals(questions.get(i))) {
 				Question removedQuestion = questions.remove(i);
+				questionIdGen.makeIdAvailable(removedQuestion.getId());
 				listenerList.itemsRemoved(this, i, new ArrayList<Question>(
 						removedQuestion));
 				return i;
@@ -102,6 +122,7 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		synchronized (questions) {
 			index = questions.size();
 			questions.add(item);
+			questionIdGen.reserveId(item.getId());
 			listenerList.itemInserted(this, index);
 			return index;
 		}
@@ -111,6 +132,7 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		@SuppressWarnings("unchecked")
 		Vector<Question> questions = (Vector<Question>) getQuestions();
 		questions.insertElementAt(item, index);
+		questionIdGen.reserveId(item.getId());
 		listenerList.itemInserted(this, index);
 	}
 
@@ -120,7 +142,9 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		Question exiled = null;
 		synchronized (questions) {
 			exiled = questions.get(index);
+			questionIdGen.makeIdAvailable(exiled.getId());
 			questions.setElementAt(item, index);
+			questionIdGen.reserveId(item.getId());
 			listenerList.itemUpdated(this, index, item);
 		}
 		return exiled;
@@ -132,6 +156,7 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		Sequence<Question> removedQuestions = new ArrayList<Question>();
 		for (int i = 0; i < count && index + i < questions.size(); i++) {
 			Question removedQuestion = questions.remove(index);
+			questionIdGen.makeIdAvailable(removedQuestion.getId());
 			removedQuestions.add(removedQuestion);
 		}
 		listenerList.itemsRemoved(this, index, removedQuestions);
@@ -141,6 +166,9 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 	public void clear() {
 		@SuppressWarnings("unchecked")
 		Vector<Question> questions = (Vector<Question>) getQuestions();
+		for (Question question : this) {
+			questionIdGen.makeIdAvailable(question.getId());
+		}
 		questions.clear();
 	}
 

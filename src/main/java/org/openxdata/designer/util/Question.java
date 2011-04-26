@@ -12,11 +12,15 @@ import org.apache.pivot.util.ListenerList;
 import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.QuestionDef;
 import org.fcitmuk.epihandy.RepeatQtnsDef;
+import org.openxdata.designer.idgen.DefaultIdGenerator;
+import org.openxdata.designer.idgen.ScarceIdGenerator;
 
 public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		List<PageElement>, PageElement {
 
 	private static Vector<PageElement> DYN_PROXY_LIST;
+	private ScarceIdGenerator questionIdGen;
+	private ScarceIdGenerator optionIdGen;
 
 	static {
 		DYN_PROXY_LIST = new Vector<PageElement>();
@@ -30,14 +34,36 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 	{
 		// Ensure the repeat's nested vector isn't null
 		repeatQuestions.setQuestions(new Vector<Question>());
+		optionIdGen = new DefaultIdGenerator(1, Short.MAX_VALUE);
 	}
 
 	public Question() {
 		setText("Unnamed Question");
 	}
 
-	public Question(QuestionDef questionDef) {
+	void setQuestionIdGen(ScarceIdGenerator questionIdGen) {
+		this.questionIdGen = questionIdGen;
+	}
+
+	public void newQuestion() {
+		Question newQuestion = new Question();
+		newQuestion.setQuestionIdGen(questionIdGen);
+		short questionId = (short) questionIdGen.nextId();
+		newQuestion.setId(questionId);
+		add(newQuestion);
+	}
+
+	public void newOption() {
+		Option newOption = new Option();
+		short optionId = (short) optionIdGen.nextId();
+		newOption.setId(optionId);
+		add(newOption);
+	}
+
+	public Question(ScarceIdGenerator questionIdGen, QuestionDef questionDef) {
 		super(questionDef);
+
+		this.questionIdGen = questionIdGen;
 
 		if (isQuestionList()) {
 			RepeatQtnsDef repeatDef = super.getRepeatQtnsDef();
@@ -47,7 +73,10 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 						.getQuestions();
 				for (int i = 0; i < nestedQuestions.size(); i++) {
 					QuestionDef nestedQuestionDef = nestedQuestions.get(i);
-					Question question = new Question(nestedQuestionDef);
+					Question question = new Question(this.questionIdGen,
+							nestedQuestionDef);
+					short questionId = (short) questionIdGen.nextId();
+					question.setId(questionId);
 					nestedQuestions.set(i, question);
 				}
 				this.repeatQuestions.setQuestions(nestedQuestions);
@@ -58,6 +87,8 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 			for (int i = 0; i < options.size(); i++) {
 				OptionDef optionDef = options.get(i);
 				Option option = new Option(optionDef);
+				short optionId = (short) optionIdGen.nextId();
+				option.setId(optionId);
 				options.set(i, option);
 			}
 			this.options = options;
@@ -175,6 +206,7 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		for (int i = 0; i < elements.size(); i++) {
 			if (item.equals(elements.get(i))) {
 				PageElement removedElement = elements.remove(i);
+				freePageElement(removedElement);
 				listenerList.itemsRemoved(this, i, new ArrayList<PageElement>(
 						removedElement));
 				return i;
@@ -232,6 +264,7 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		synchronized (elements) {
 			index = elements.size();
 			elements.add(item);
+			reservePageElement(item);
 			listenerList.itemInserted(this, index);
 			return index;
 		}
@@ -240,6 +273,7 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 	public void insert(PageElement item, int index) {
 		Vector<PageElement> elements = (Vector<PageElement>) getElements();
 		elements.insertElementAt(item, index);
+		reservePageElement(item);
 		listenerList.itemInserted(this, index);
 	}
 
@@ -248,7 +282,9 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		PageElement exiled = null;
 		synchronized (elements) {
 			exiled = elements.get(index);
+			freePageElement(exiled);
 			elements.setElementAt(item, index);
+			reservePageElement(item);
 		}
 		listenerList.itemUpdated(this, index, exiled);
 		return exiled;
@@ -259,14 +295,47 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		Sequence<PageElement> removedPageElements = new ArrayList<PageElement>();
 		for (int i = 0; i < count && index + i < elements.size(); i++) {
 			PageElement removedPageElement = elements.remove(index);
+			freePageElement(removedPageElement);
 			removedPageElements.add(removedPageElement);
 		}
 		listenerList.itemsRemoved(this, index, removedPageElements);
 		return removedPageElements;
 	}
 
+	private void reservePageElement(PageElement pageItem) {
+
+		if (pageItem instanceof Question) {
+			Question q = (Question) pageItem;
+			questionIdGen.reserveId(q.getId());
+			return;
+		}
+
+		if (pageItem instanceof Option) {
+			Option o = (Option) pageItem;
+			optionIdGen.reserveId(o.getId());
+			return;
+		}
+	}
+
+	private void freePageElement(PageElement pageItem) {
+
+		if (pageItem instanceof Question) {
+			Question q = (Question) pageItem;
+			questionIdGen.makeIdAvailable(q.getId());
+			return;
+		}
+
+		if (pageItem instanceof Option) {
+			Option o = (Option) pageItem;
+			optionIdGen.makeIdAvailable(o.getId());
+			return;
+		}
+	}
+
 	public void clear() {
 		Vector<PageElement> elements = (Vector<PageElement>) getElements();
+		for (PageElement pageItem : this)
+			freePageElement(pageItem);
 		elements.clear();
 	}
 
