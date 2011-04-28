@@ -38,23 +38,28 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 
 		// Patch up pages into alternative model representation
 		Vector<PageDef> pages = (Vector<PageDef>) getPages();
-		for (int i = 0; i < pages.size(); i++) {
-			PageDef pageDef = pages.elementAt(i);
-			Page page = new Page(questionIdGen, pageDef);
-			pages.setElementAt(page, i);
-			idGen.reserveId(page.getPageNo());
+		if (pages != null) {
+			for (int i = 0; i < pages.size(); i++) {
+				PageDef pageDef = pages.elementAt(i);
+				Page page = new Page(questionIdGen, pageDef);
+				pages.setElementAt(page, i);
+				idGen.reserveId(page.getPageNo());
+			}
 		}
 
 		// Patch up dynamic options
 		Hashtable<Short, DynamicOptionDef> dynOptionMap = (Hashtable<Short, DynamicOptionDef>) getDynamicOptions();
-		for (Map.Entry<Short, DynamicOptionDef> entry : dynOptionMap.entrySet()) {
-			Hashtable<Short, Vector<OptionDef>> optionMap = entry.getValue()
-					.getParentToChildOptions();
-			for (Map.Entry<Short, Vector<OptionDef>> optionEntry : optionMap
+		if (dynOptionMap != null) {
+			for (Map.Entry<Short, DynamicOptionDef> entry : dynOptionMap
 					.entrySet()) {
-				Vector<OptionDef> options = optionEntry.getValue();
-				for (int i = 0; i < options.size(); i++)
-					options.set(i, new Option(options.get(i)));
+				Hashtable<Short, Vector<OptionDef>> optionMap = entry
+						.getValue().getParentToChildOptions();
+				for (Map.Entry<Short, Vector<OptionDef>> optionEntry : optionMap
+						.entrySet()) {
+					Vector<OptionDef> options = optionEntry.getValue();
+					for (int i = 0; i < options.size(); i++)
+						options.set(i, new Option(options.get(i)));
+				}
 			}
 		}
 
