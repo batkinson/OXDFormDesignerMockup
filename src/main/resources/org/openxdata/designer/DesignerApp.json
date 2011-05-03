@@ -50,4 +50,11 @@
 	optionVariableNameLabel: "Binding",
 	dynamicOptionDialogTitle: "Dynamic Options",
 	skipRuleDialogTitle: "Skip Rules",
+	skipRuleConditionOperatorNullLabel: "One",
+	skipRuleConditionOperatorAndLabel: "All",
+	skipRuleConditionOperatorOrLabel: "Any",
+	skipRuleActionShowLabel: "Show",
+	skipRuleActionHideLabel: "Hide",
+	skipRuleActionDisableLabel: "Disable",
+	skipRuleActionEnableLabel: "Enable",
 }

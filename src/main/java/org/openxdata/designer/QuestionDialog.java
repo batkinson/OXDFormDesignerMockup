@@ -12,12 +12,13 @@ import org.apache.pivot.wtk.Component;
 import org.apache.pivot.wtk.Dialog;
 import org.apache.pivot.wtk.ListButton;
 import org.apache.pivot.wtk.PushButton;
-import org.openxdata.designer.designtree.QuestionTypeMapping;
+import org.fcitmuk.epihandy.QuestionDef;
 import org.openxdata.designer.util.Question;
+import org.openxdata.designer.util.StaticFieldMapping;
 
 public class QuestionDialog extends Dialog implements Bindable {
 
-	private QuestionTypeMapping questionMapping;
+	private StaticFieldMapping<Byte> questionMapping;
 
 	@BXML
 	private ListButton questionType;
@@ -29,9 +30,10 @@ public class QuestionDialog extends Dialog implements Bindable {
 			Resources resources) {
 
 		// Populate dropdown with localized labels for valid question types
-		questionMapping = new QuestionTypeMapping(resources);
+		questionMapping = new StaticFieldMapping<Byte>(QuestionDef.class,
+				"QTN_TYPE_", "questionType", null, resources);
 		questionType.setSelectedItemBindMapping(questionMapping);
-		questionType.setListData(questionMapping.getTypeLabels());
+		questionType.setListData(questionMapping.getLabels());
 
 		// Install event handler for save button
 		questionDialogSaveButton.setAction(new Action() {

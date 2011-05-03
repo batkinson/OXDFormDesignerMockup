@@ -13,6 +13,7 @@ import org.apache.pivot.wtk.Menu.Section;
 import org.apache.pivot.wtk.MenuBar;
 import org.apache.pivot.wtk.TreeView;
 import org.openxdata.designer.DynamicOptionDialog;
+import org.openxdata.designer.SkipRuleDialog;
 import org.openxdata.designer.util.DynamicOptionProxy;
 import org.openxdata.designer.util.Form;
 import org.openxdata.designer.util.Option;
@@ -37,7 +38,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 	private DynamicOptionDialog dynamicOptionDialog;
 
 	@BXML
-	private Dialog skipRuleDialog;
+	private SkipRuleDialog skipRuleDialog;
 
 	public void configureMenuBar(Component component, MenuBar menuBar) {
 	}
@@ -81,6 +82,8 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				manageSkipRules.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
+						skipRuleDialog.getUserData().put("activeForm", form);
+						skipRuleDialog.loadRules();
 						skipRuleDialog.open(designTree.getDisplay(),
 								designTree.getWindow());
 					}
