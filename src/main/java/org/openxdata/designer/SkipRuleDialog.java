@@ -79,6 +79,8 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 	public void initialize(Map<String, Object> namespace, URL location,
 			Resources resources) {
 
+		
+		
 		StaticFieldMapping<Short> junctionBindMapping = new StaticFieldMapping<Short>(
 				EpihandyConstants.class, "CONDITIONS_OPERATOR_",
 				"skipRuleConditionOperator", null, resources);

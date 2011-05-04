@@ -7,7 +7,7 @@
 	xmlns:collections="org.apache.pivot.collections"
 	xmlns="org.apache.pivot.wtk">
 	<BoxPane orientation="vertical" styles="{fill:true}">
-		<TablePane preferredWidth="420" preferredHeight="410" styles="{horizontalSpacing:10}">
+		<TablePane preferredWidth="420" preferredHeight="420" styles="{horizontalSpacing:10}">
 			<columns>
 				<TablePane.Column width="1*"/>
 				<TablePane.Column width="2*"/>
@@ -50,7 +50,7 @@
 								<ButtonGroup bxml:id="actionShowHideGroup" />
 								<ButtonGroup bxml:id="actionEnableDisableGroup" />
 							</bxml:define>
-							<Border title="Actions">
+							<Border title="Actions" styles="{padding: 5}">
 								<BoxPane orientation="vertical">
 									<RadioButton bxml:id="skipRuleShowRadioButton" buttonData="Show" buttonGroup="$actionShowHideGroup" selectedKey="actionShow" />
 									<RadioButton bxml:id="skipRuleHideRadioButton" buttonData="Hide" buttonGroup="$actionShowHideGroup" selectedKey="actionHide" />
