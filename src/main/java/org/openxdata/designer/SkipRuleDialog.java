@@ -25,6 +25,7 @@ import org.apache.pivot.wtk.PushButton;
 import org.apache.pivot.wtk.RadioButton;
 import org.apache.pivot.wtk.Span;
 import org.apache.pivot.wtk.TableView;
+import org.apache.pivot.wtk.TextInput;
 import org.apache.pivot.wtk.TableView.Column;
 import org.apache.pivot.wtk.TableView.ColumnSequence;
 import org.apache.pivot.wtk.content.ListItem;
@@ -223,11 +224,20 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 		functionList.setListData(functionBindMapping.getLabels());
 		functionList.setSelectedItemKey("function");
 
+		TextInput valueInput = new TextInput();
+		valueInput.setTextKey("value");
+
+		TextInput secondValueInput = new TextInput();
+		secondValueInput.setTextKey("secondValue");
+
 		// Install cell editors for condition table
 		conditionTableRowEditor.getCellEditors()
 				.put("questionId", questionList);
 		conditionTableRowEditor.getCellEditors().put("operator", operatorList);
 		conditionTableRowEditor.getCellEditors().put("function", functionList);
+		conditionTableRowEditor.getCellEditors().put("value", valueInput);
+		conditionTableRowEditor.getCellEditors().put("secondValue",
+				secondValueInput);
 		skipRuleConditionTable.setRowEditor(conditionTableRowEditor);
 
 		// Install cell renderers for condition table
