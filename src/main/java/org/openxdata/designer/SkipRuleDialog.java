@@ -25,7 +25,11 @@ import org.apache.pivot.wtk.PushButton;
 import org.apache.pivot.wtk.RadioButton;
 import org.apache.pivot.wtk.Span;
 import org.apache.pivot.wtk.TableView;
+import org.apache.pivot.wtk.TableView.Column;
+import org.apache.pivot.wtk.TableView.ColumnSequence;
 import org.apache.pivot.wtk.content.ListItem;
+import org.apache.pivot.wtk.content.TableViewCellRenderer;
+import org.apache.pivot.wtk.content.TableViewRowEditor;
 import org.fcitmuk.epihandy.Condition;
 import org.fcitmuk.epihandy.EpihandyConstants;
 import org.fcitmuk.epihandy.SkipRule;
@@ -68,6 +72,8 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 
 	@BXML
 	private Checkbox skipRuleRequireCheckbox;
+
+	private TableViewRowEditor conditionTableRowEditor;
 
 	public void initialize(Map<String, Object> namespace, URL location,
 			Resources resources) {
@@ -169,6 +175,130 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 		skipRuleEnableRadioButton.setAction(actionAction);
 		skipRuleDisableRadioButton.setAction(actionAction);
 		skipRuleRequireCheckbox.setAction(actionAction);
+
+		// Set up cell editors for the conditions
+		conditionTableRowEditor = new TableViewRowEditor();
+
+		ListButton questionList = new ListButton();
+		questionList.setSelectedItemBindMapping(new ListView.ItemBindMapping() {
+
+			public int indexOf(List<?> listData, Object value) {
+				Short questionId = (Short) value;
+
+				if (questionId != null)
+					for (int i = 0; i < listData.getLength(); i++) {
+						ListItem item = (ListItem) listData.get(i);
+						if (((Question) item.getUserData()).getId() == questionId)
+							return i;
+					}
+				return -1;
+			}
+
+			public Object get(List<?> listData, int index) {
+				ListItem item = (ListItem) listData.get(index);
+				Question q = (Question) item.getUserData();
+				return q.getId();
+			}
+		});
+		questionList.setSelectedItemKey("questionId");
+
+		String[] skippedOperators = { "NULL", "IN_LIST", "NOT_IN_LIST",
+				"IS_NULL", "IS_NOT_NULL" };
+		Set<String> skippedOperatorSet = new HashSet<String>();
+		for (String op : skippedOperators)
+			skippedOperatorSet.add(op);
+		final StaticFieldMapping<Byte> operatorBindMapping = new StaticFieldMapping<Byte>(
+				EpihandyConstants.class, "OPERATOR_", "conditionOperator",
+				skippedOperatorSet, resources);
+		ListButton operatorList = new ListButton();
+		operatorList.setSelectedItemBindMapping(operatorBindMapping);
+		operatorList.setListData(operatorBindMapping.getLabels());
+		operatorList.setSelectedItemKey("operator");
+
+		final StaticFieldMapping<Byte> functionBindMapping = new StaticFieldMapping<Byte>(
+				EpihandyConstants.class, "FUNCTION_", "conditionFunction",
+				null, resources);
+		ListButton functionList = new ListButton();
+		functionList.setSelectedItemBindMapping(functionBindMapping);
+		functionList.setListData(functionBindMapping.getLabels());
+		functionList.setSelectedItemKey("function");
+
+		// Install cell editors for condition table
+		conditionTableRowEditor.getCellEditors()
+				.put("questionId", questionList);
+		conditionTableRowEditor.getCellEditors().put("operator", operatorList);
+		conditionTableRowEditor.getCellEditors().put("function", functionList);
+		skipRuleConditionTable.setRowEditor(conditionTableRowEditor);
+
+		// Install cell renderers for condition table
+		ColumnSequence columns = skipRuleConditionTable.getColumns();
+		for (Column column : columns) {
+
+			if ("questionId".equals(column.getName())) {
+				column.setCellRenderer(new TableViewCellRenderer() {
+					@Override
+					public void render(Object row, int rowIndex,
+							int columnIndex, TableView tableView,
+							String columnName, boolean selected,
+							boolean highlighted, boolean disabled) {
+
+						renderStyles(tableView, selected, disabled);
+
+						String text = null;
+						if (row != null && columnName != null) {
+							text = toString(row, columnName);
+							Question q = (Question) getForm().getQuestion(
+									Short.parseShort(text));
+							text = q.getText();
+						}
+
+						setText(text);
+					}
+				});
+			}
+
+			if ("operator".equals(column.getName())) {
+				column.setCellRenderer(new TableViewCellRenderer() {
+					public void render(Object row, int rowIndex,
+							int columnIndex, TableView tableView,
+							String columnName, boolean selected,
+							boolean highlighted, boolean disabled) {
+
+						renderStyles(tableView, selected, disabled);
+
+						String text = null;
+						if (row != null && columnName != null) {
+							text = toString(row, columnName);
+							text = operatorBindMapping.getLabelForValue(Byte
+									.parseByte(text));
+						}
+
+						setText(text);
+					}
+				});
+			}
+
+			if ("function".equals(column.getName())) {
+				column.setCellRenderer(new TableViewCellRenderer() {
+					public void render(Object row, int rowIndex,
+							int columnIndex, TableView tableView,
+							String columnName, boolean selected,
+							boolean highlighted, boolean disabled) {
+
+						renderStyles(tableView, selected, disabled);
+
+						String text = null;
+						if (row != null && columnName != null) {
+							text = toString(row, columnName);
+							text = functionBindMapping.getLabelForValue(Byte
+									.parseByte(text));
+						}
+
+						setText(text);
+					}
+				});
+			}
+		}
 
 		skipRuleDialogSaveButton.setAction(new Action() {
 			@Override
@@ -317,7 +447,7 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 
 		conditionList.clear();
 		for (Condition condition : conditions) {
-			conditionList.add(new Condition(condition));
+			conditionList.add(condition);
 		}
 
 	}
@@ -355,6 +485,10 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 				item.setUserData(question);
 				skipRuleTargetData.add(item);
 			}
+
+		ListButton questionIdButton = (ListButton) conditionTableRowEditor
+				.getCellEditors().get("questionId");
+		questionIdButton.setListData(skipRuleTargetData);
 
 		// Select first rule to update UI via event handlers
 		skipRuleList.setSelectedIndex(0);

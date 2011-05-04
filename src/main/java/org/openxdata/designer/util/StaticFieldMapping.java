@@ -98,7 +98,7 @@ public class StaticFieldMapping<T> implements ListView.ListDataBindMapping,
 		return null;
 	}
 
-	private String getLabelForValue(T value) {
+	public String getLabelForValue(T value) {
 		String result = null;
 		String typeName = getNameForValue(value);
 		if (typeName != null) {
@@ -107,7 +107,7 @@ public class StaticFieldMapping<T> implements ListView.ListDataBindMapping,
 		return result;
 	}
 
-	private T getValueForLabel(String label) {
+	public T getValueForLabel(String label) {
 		T result = null;
 		if (labelMap.containsKey(label)) {
 			String type = labelMap.get(label);

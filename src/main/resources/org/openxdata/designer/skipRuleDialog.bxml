@@ -37,6 +37,7 @@
 									<TableView.Column name="operator" headerData="Operator" />
 									<TableView.Column name="function" headerData="Function" />
 									<TableView.Column name="value" headerData="Value" />
+									<TableView.Column name="secondValue" headerData="Second Value" />
 								</columns>
 							</TableView>
 							<columnHeader>
