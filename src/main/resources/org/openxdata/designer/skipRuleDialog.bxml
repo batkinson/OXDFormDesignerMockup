@@ -15,7 +15,7 @@
 			<TablePane.Row height="1*">
 				<Border title="Rules" styles="{padding:2,backgroundColor:10,padding:5}">
 					<BoxPane orientation="vertical" styles="{fill:true}">
-						<ScrollPane preferredHeight="275" horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
+						<ScrollPane preferredHeight="370" horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
 							<ListView bxml:id="skipRuleList" />
 						</ScrollPane>
 						<BoxPane orientation="horizontal" styles="{horizontalAlignment:'center'}">
