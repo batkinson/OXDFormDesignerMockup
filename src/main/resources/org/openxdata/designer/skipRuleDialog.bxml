@@ -46,6 +46,10 @@
 									<TableViewHeader tableView="$skipRuleConditionTable" />
 								</columnHeader>
 							</ScrollPane>
+							<BoxPane styles="{horizontalAlignment:'center'}">
+								<PushButton bxml:id="skipRuleConditionAddButton" buttonData="Add" />
+								<PushButton bxml:id="skipRuleConditionDeleteButton" buttonData="Delete" />
+							</BoxPane>
 							<BoxPane orientation="horizontal" styles="{verticalAlignment:'center'}">
 								<Label text="When satisfied, " />
 								<bxml:define>

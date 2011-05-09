@@ -26,6 +26,7 @@ import org.apache.pivot.wtk.PushButton;
 import org.apache.pivot.wtk.RadioButton;
 import org.apache.pivot.wtk.Span;
 import org.apache.pivot.wtk.TableView;
+import org.apache.pivot.wtk.TableViewSelectionListener;
 import org.apache.pivot.wtk.TableView.Column;
 import org.apache.pivot.wtk.TableView.ColumnSequence;
 import org.apache.pivot.wtk.TextInput;
@@ -79,6 +80,12 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 	private PushButton skipRuleDeleteButton;
 
 	@BXML
+	private PushButton skipRuleConditionAddButton;
+
+	@BXML
+	private PushButton skipRuleConditionDeleteButton;
+
+	@BXML
 	private Checkbox skipRuleRequireCheckbox;
 
 	@BXML
@@ -119,6 +126,46 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 
 		// Deletion shouldn't be possible until a rule is selected.
 		skipRuleDeleteButton.getAction().setEnabled(false);
+
+		skipRuleConditionAddButton.setAction(new Action() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public void perform(Component source) {
+				List<Condition> tableData = (List<Condition>) skipRuleConditionTable
+						.getTableData();
+				SkipRule selectedRule = (SkipRule) ((ListItem) skipRuleList
+						.getSelectedItem()).getUserData();
+				selectedRule.getConditions().add(new Condition());
+				tableData.add(new Condition());
+			}
+		});
+
+		skipRuleConditionDeleteButton.setAction(new Action() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public void perform(Component source) {
+				List<Condition> tableData = (List<Condition>) skipRuleConditionTable
+						.getTableData();
+				SkipRule selectedRule = (SkipRule) ((ListItem) skipRuleList
+						.getSelectedItem()).getUserData();
+				Condition selectedItem = (Condition) skipRuleConditionTable
+						.getSelectedRow();
+				selectedRule.getConditions().remove(selectedItem);
+				tableData.remove(selectedItem);
+			}
+		});
+
+		skipRuleConditionDeleteButton.getAction().setEnabled(false);
+
+		skipRuleConditionTable.getTableViewSelectionListeners().add(
+				new TableViewSelectionListener.Adapter() {
+					@Override
+					public void selectedRowChanged(TableView tableView,
+							Object previousSelectedRow) {
+						skipRuleConditionDeleteButton.getAction().setEnabled(
+								tableView.getSelectedIndex() >= 0);
+					}
+				});
 
 		StaticFieldMapping<Short> junctionBindMapping = new StaticFieldMapping<Short>(
 				EpihandyConstants.class, "CONDITIONS_OPERATOR_",
@@ -306,7 +353,7 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 							text = toString(row, columnName);
 							Question q = (Question) getForm().getQuestion(
 									Short.parseShort(text));
-							text = q.getText();
+							text = q == null ? "Select Question" : q.getText();
 						}
 
 						setText(text);
