@@ -14,6 +14,7 @@ import org.apache.pivot.collections.Map;
 import org.apache.pivot.collections.Sequence;
 import org.apache.pivot.util.Resources;
 import org.apache.pivot.wtk.Action;
+import org.apache.pivot.wtk.CardPane;
 import org.apache.pivot.wtk.Checkbox;
 import org.apache.pivot.wtk.Component;
 import org.apache.pivot.wtk.Dialog;
@@ -25,9 +26,9 @@ import org.apache.pivot.wtk.PushButton;
 import org.apache.pivot.wtk.RadioButton;
 import org.apache.pivot.wtk.Span;
 import org.apache.pivot.wtk.TableView;
-import org.apache.pivot.wtk.TextInput;
 import org.apache.pivot.wtk.TableView.Column;
 import org.apache.pivot.wtk.TableView.ColumnSequence;
+import org.apache.pivot.wtk.TextInput;
 import org.apache.pivot.wtk.content.ListItem;
 import org.apache.pivot.wtk.content.TableViewCellRenderer;
 import org.apache.pivot.wtk.content.TableViewRowEditor;
@@ -72,15 +73,39 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 	private RadioButton skipRuleDisableRadioButton;
 
 	@BXML
+	private PushButton skipRuleAddButton;
+
+	@BXML
+	private PushButton skipRuleDeleteButton;
+
+	@BXML
 	private Checkbox skipRuleRequireCheckbox;
+
+	@BXML
+	private CardPane skipRuleCardPane;
 
 	private TableViewRowEditor conditionTableRowEditor;
 
 	public void initialize(Map<String, Object> namespace, URL location,
 			Resources resources) {
 
-		
-		
+		skipRuleAddButton.setAction(new Action() {
+			@Override
+			public void perform(Component source) {
+				System.out.println("Adding rule");
+			}
+		});
+
+		skipRuleDeleteButton.setAction(new Action() {
+			@Override
+			public void perform(Component source) {
+				System.out.println("Deleting rule");
+			}
+		});
+
+		// Deletion shouldn't be possible until a rule is selected.
+		skipRuleDeleteButton.getAction().setEnabled(false);
+
 		StaticFieldMapping<Short> junctionBindMapping = new StaticFieldMapping<Short>(
 				EpihandyConstants.class, "CONDITIONS_OPERATOR_",
 				"skipRuleConditionOperator", null, resources);
@@ -110,7 +135,12 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 							SkipRule selectedRule = (SkipRule) item
 									.getUserData();
 							updateForSelectedRule(selectedRule);
+							skipRuleCardPane.setSelectedIndex(1);
+						} else {
+							skipRuleCardPane.setSelectedIndex(0);
 						}
+						skipRuleDeleteButton.getAction().setEnabled(
+								item != null);
 					}
 				});
 
@@ -461,7 +491,6 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 		for (Condition condition : conditions) {
 			conditionList.add(condition);
 		}
-
 	}
 
 	private Form getForm() {
@@ -501,9 +530,6 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 		ListButton questionIdButton = (ListButton) conditionTableRowEditor
 				.getCellEditors().get("questionId");
 		questionIdButton.setListData(skipRuleTargetData);
-
-		// Select first rule to update UI via event handlers
-		skipRuleList.setSelectedIndex(0);
 	}
 
 	@SuppressWarnings("unchecked")

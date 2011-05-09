@@ -24,47 +24,50 @@
 						</BoxPane>
 					</BoxPane>
 				</Border>
-				<Border title="Rule Properties" styles="{padding:2,backgroundColor:10,padding:5}">
-					<BoxPane orientation="vertical" styles="{fill:true}">
-						<BoxPane orientation="horizontal" styles="{verticalAlignment:'center'}">
-							<ListButton bxml:id="skipRuleJunctionButton" />
-							<Label text="conditions must match." />
+				<CardPane bxml:id="skipRuleCardPane">
+					<Label text="Please select a skip rule." styles="{horizontalAlignment:'center', verticalAlignment:'center'}" />
+					<Border title="Rule Properties" styles="{padding:2,backgroundColor:10,padding:5}">
+						<BoxPane orientation="vertical" styles="{fill:true}">
+							<BoxPane orientation="horizontal" styles="{verticalAlignment:'center'}">
+								<ListButton bxml:id="skipRuleJunctionButton" />
+								<Label text="conditions must match." />
+							</BoxPane>
+							<ScrollPane preferredHeight="125">
+								<TableView bxml:id="skipRuleConditionTable">
+									<columns>
+										<TableView.Column name="questionId" headerData="Question" />
+										<TableView.Column name="operator" headerData="Operator" />
+										<TableView.Column name="function" headerData="Function" />
+										<TableView.Column name="value" headerData="Value" />
+										<TableView.Column name="secondValue" headerData="Second Value" />
+									</columns>
+								</TableView>
+								<columnHeader>
+									<TableViewHeader tableView="$skipRuleConditionTable" />
+								</columnHeader>
+							</ScrollPane>
+							<BoxPane orientation="horizontal" styles="{verticalAlignment:'center'}">
+								<Label text="When satisfied, " />
+								<bxml:define>
+									<ButtonGroup bxml:id="actionShowHideGroup" />
+									<ButtonGroup bxml:id="actionEnableDisableGroup" />
+								</bxml:define>
+								<Border title="Actions" styles="{padding: 5}">
+									<BoxPane orientation="vertical">
+										<RadioButton bxml:id="skipRuleShowRadioButton" buttonData="Show" buttonGroup="$actionShowHideGroup" selectedKey="actionShow" />
+										<RadioButton bxml:id="skipRuleHideRadioButton" buttonData="Hide" buttonGroup="$actionShowHideGroup" selectedKey="actionHide" />
+										<RadioButton bxml:id="skipRuleEnableRadioButton" buttonData="Enable" buttonGroup="$actionEnableDisableGroup" selectedKey="actionEnable" />
+										<RadioButton bxml:id="skipRuleDisableRadioButton" buttonData="Disable" buttonGroup="$actionEnableDisableGroup" selectedKey="actionDisable" />
+									</BoxPane>
+									<Checkbox bxml:id="skipRuleRequireCheckbox" buttonData="Require" selectedKey="actionRequire" />
+								</Border>
+							</BoxPane>
+							<ScrollPane preferredHeight="120" horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
+								<ListView bxml:id="skipRuleTargetList" selectMode="multi" />
+							</ScrollPane>
 						</BoxPane>
-						<ScrollPane preferredHeight="125">
-							<TableView bxml:id="skipRuleConditionTable">
-								<columns>
-									<TableView.Column name="questionId" headerData="Question" />
-									<TableView.Column name="operator" headerData="Operator" />
-									<TableView.Column name="function" headerData="Function" />
-									<TableView.Column name="value" headerData="Value" />
-									<TableView.Column name="secondValue" headerData="Second Value" />
-								</columns>
-							</TableView>
-							<columnHeader>
-								<TableViewHeader tableView="$skipRuleConditionTable" />
-							</columnHeader>
-						</ScrollPane>
-						<BoxPane orientation="horizontal" styles="{verticalAlignment:'center'}">
-							<Label text="When satisfied, " />
-							<bxml:define>
-								<ButtonGroup bxml:id="actionShowHideGroup" />
-								<ButtonGroup bxml:id="actionEnableDisableGroup" />
-							</bxml:define>
-							<Border title="Actions" styles="{padding: 5}">
-								<BoxPane orientation="vertical">
-									<RadioButton bxml:id="skipRuleShowRadioButton" buttonData="Show" buttonGroup="$actionShowHideGroup" selectedKey="actionShow" />
-									<RadioButton bxml:id="skipRuleHideRadioButton" buttonData="Hide" buttonGroup="$actionShowHideGroup" selectedKey="actionHide" />
-									<RadioButton bxml:id="skipRuleEnableRadioButton" buttonData="Enable" buttonGroup="$actionEnableDisableGroup" selectedKey="actionEnable" />
-									<RadioButton bxml:id="skipRuleDisableRadioButton" buttonData="Disable" buttonGroup="$actionEnableDisableGroup" selectedKey="actionDisable" />
-								</BoxPane>
-								<Checkbox bxml:id="skipRuleRequireCheckbox" buttonData="Require" selectedKey="actionRequire" />
-							</Border>
-						</BoxPane>
-						<ScrollPane preferredHeight="120" horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
-							<ListView bxml:id="skipRuleTargetList" selectMode="multi" />
-						</ScrollPane>
-					</BoxPane>
-				</Border>
+					</Border>
+				</CardPane>
 			</TablePane.Row>
 		</TablePane>
 		<BoxPane orientation="horizontal" styles="{horizontalAlignment:'right',fill:true}">
