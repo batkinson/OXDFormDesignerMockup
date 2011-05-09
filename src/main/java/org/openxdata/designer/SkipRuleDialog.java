@@ -90,16 +90,30 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 			Resources resources) {
 
 		skipRuleAddButton.setAction(new Action() {
+			@SuppressWarnings({ "unchecked", "rawtypes" })
 			@Override
 			public void perform(Component source) {
-				System.out.println("Adding rule");
+				SkipRule newRule = new SkipRule();
+				newRule.setConditions(new Vector());
+				newRule.setActionTargets(new Vector());
+				ListItem ruleItem = new ListItem("Rule "
+						+ (skipRuleList.getListData().getLength() + 1));
+				ruleItem.setUserData(newRule);
+				List<ListItem> ruleList = (List<ListItem>) skipRuleList
+						.getListData();
+				ruleList.add(ruleItem);
 			}
 		});
 
 		skipRuleDeleteButton.setAction(new Action() {
+			@SuppressWarnings("unchecked")
 			@Override
 			public void perform(Component source) {
-				System.out.println("Deleting rule");
+				ListItem selectedItem = (ListItem) skipRuleList
+						.getSelectedItem();
+				List<ListItem> ruleList = (List<ListItem>) skipRuleList
+						.getListData();
+				ruleList.remove(selectedItem);
 			}
 		});
 
@@ -120,7 +134,8 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 						ListItem item = (ListItem) skipRuleList
 								.getSelectedItem();
 						if (item != null) {
-							listButton.store(new BeanAdapter(item.getUserData()));
+							listButton.store(new BindContext((SkipRule) item
+									.getUserData()));
 						}
 					}
 				});
@@ -479,17 +494,21 @@ public class SkipRuleDialog extends Dialog implements Bindable {
 		List<Condition> conditionList = (List<Condition>) skipRuleConditionTable
 				.getTableData();
 
-		Sequence<Object> selectedTargets = new ArrayList<Object>();
-		for (ListItem targetItem : targetList) {
-			Question candidateTarget = (Question) targetItem.getUserData();
-			if (targetQuestionIds.contains(candidateTarget.getId()))
-				selectedTargets.add(targetItem);
+		if (targetQuestionIds != null) {
+			Sequence<Object> selectedTargets = new ArrayList<Object>();
+			for (ListItem targetItem : targetList) {
+				Question candidateTarget = (Question) targetItem.getUserData();
+				if (targetQuestionIds.contains(candidateTarget.getId()))
+					selectedTargets.add(targetItem);
+			}
+			skipRuleTargetList.setSelectedItems(selectedTargets);
 		}
-		skipRuleTargetList.setSelectedItems(selectedTargets);
 
 		conditionList.clear();
-		for (Condition condition : conditions) {
-			conditionList.add(condition);
+		if (conditions != null) {
+			for (Condition condition : conditions) {
+				conditionList.add(condition);
+			}
 		}
 	}
 
