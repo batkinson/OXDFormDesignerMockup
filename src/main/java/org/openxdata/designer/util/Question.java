@@ -172,13 +172,13 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		return questionType == QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	Vector<PageElement> getElements() {
 		Vector<PageElement> elements = new Vector<PageElement>();
 		if (isQuestionList()) {
 			elements = getRepeatQtnsDef().getQuestions();
 		} else if (isStaticOptionList()) {
-			elements = (Vector<PageElement>) getOptions();
+			elements = (Vector) getOptions();
 		} else if (isDynamicOptionList()) {
 			elements = DYN_PROXY_LIST;
 		}
