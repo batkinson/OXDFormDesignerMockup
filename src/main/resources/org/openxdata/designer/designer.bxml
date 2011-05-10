@@ -13,6 +13,7 @@
 		<bxml:include bxml:id="optionDialog" src="optionDialog.bxml"/>
 		<bxml:include bxml:id="dynamicOptionDialog" src="dynamicOptionDialog.bxml" inline="true" />
 		<bxml:include bxml:id="skipRuleDialog" src="skipRuleDialog.bxml" />
+		<bxml:include bxml:id="validationRuleDialog" src="validationRuleDialog.bxml" />
     </bxml:define>
     
 	<bxml:script src="dragdrop.js" />

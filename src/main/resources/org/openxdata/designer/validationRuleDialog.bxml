@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<designer:ValidationRuleDialog bxml:id="validationRuleDialog" title="%validationRuleDialogTitle"
+	xmlns:bxml="http://pivot.apache.org/bxml"
+	xmlns:designer="org.openxdata.designer"
+	xmlns:dynopttree="org.openxdata.designer.dynopttree"
+	xmlns:content="org.apache.pivot.wtk.content"
+	xmlns:collections="org.apache.pivot.collections"
+	xmlns="org.apache.pivot.wtk">
+	<BoxPane orientation="vertical" styles="{fill:true}">
+		<BoxPane orientation="horizontal" styles="{verticalAlignment:'center'}">
+			<Label text="Question" />
+			<Label bxml:id="validationRuleQuestionText" />
+			<Label text="valid when" />
+			<ListButton bxml:id="validationRuleJunctionButton" />
+			<Label text="apply." />
+		</BoxPane>
+		<ScrollPane preferredHeight="125" preferredWidth="200">
+			<TableView bxml:id="validationRuleConditionTable">
+				<columns>
+					<TableView.Column name="function" headerData="Function" />
+					<TableView.Column name="operator" headerData="Operator" />
+					<TableView.Column name="value" headerData="Value" />
+				</columns>
+			</TableView>
+			<columnHeader>
+				<TableViewHeader tableView="$validationRuleConditionTable" />
+			</columnHeader>
+		</ScrollPane>
+		<BoxPane orientation="horizontal" styles="{horizontalAlignment:'center'}">
+			<PushButton bxml:id="validationRuleConditionAddButton" buttonData="Add" />
+			<PushButton bxml:id="validationRuleConditionDeleteButton" buttonData="Delete" />
+		</BoxPane>
+		<Label text="Error Message:" />
+		<TextInput bxml:id="validationRuleErrorMessageText" textKey="errorMessage" />
+		<BoxPane orientation="horizontal" styles="{horizontalAlignment:'right',fill:true}">
+			<PushButton buttonData="Cancel" ButtonPressListener.buttonPressed="validationRuleDialog.close()"/>
+			<PushButton bxml:id="validationRuleDialogSaveButton" buttonData="Save" />
+		</BoxPane>
+	</BoxPane>
+</designer:ValidationRuleDialog>

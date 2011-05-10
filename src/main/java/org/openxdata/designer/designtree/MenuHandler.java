@@ -14,6 +14,7 @@ import org.apache.pivot.wtk.MenuBar;
 import org.apache.pivot.wtk.TreeView;
 import org.openxdata.designer.DynamicOptionDialog;
 import org.openxdata.designer.SkipRuleDialog;
+import org.openxdata.designer.ValidationRuleDialog;
 import org.openxdata.designer.util.DynamicOptionProxy;
 import org.openxdata.designer.util.Form;
 import org.openxdata.designer.util.Option;
@@ -40,12 +41,16 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 	@BXML
 	private SkipRuleDialog skipRuleDialog;
 
+	@BXML
+	private ValidationRuleDialog validationRuleDialog;
+
 	public void configureMenuBar(Component component, MenuBar menuBar) {
 	}
 
 	public void cleanupMenuBar(Component component, MenuBar menuBar) {
 	}
 
+	@SuppressWarnings("unchecked")
 	public boolean configureContextMenu(Component component, Menu menu, int x,
 			int y) {
 
@@ -141,13 +146,16 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				section.add(propertiesItem);
 			} else if (clickedObject instanceof Question) {
 
-				@SuppressWarnings("unchecked")
+				final Form form = (Form) Sequence.Tree.get(treeData,
+						new Sequence.Tree.Path(0));
 				final List<Question> questionList = (List<Question>) clickedParent;
 				final Question question = (Question) clickedObject;
 
 				Menu.Item removeQuestionItem = new Menu.Item("Remove Question");
 				Menu.Item newQuestionItem = new Menu.Item("New Question");
 				Menu.Item newOptionItem = new Menu.Item("New Option");
+				Menu.Item validationRuleItem = new Menu.Item(
+						"Validation Rules...");
 				Menu.Item propertiesItem = new Menu.Item("Properties...");
 
 				removeQuestionItem.setAction(new Action() {
@@ -172,6 +180,20 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 					}
 				});
 
+				validationRuleItem.setAction(new Action() {
+					@Override
+					public void perform(Component source) {
+
+						validationRuleDialog.getUserData().put("activeForm",
+								form);
+						validationRuleDialog.getUserData().put(
+								"activeQuestion", question);
+						validationRuleDialog.loadRule();
+						validationRuleDialog.open(designTree.getDisplay(),
+								designTree.getWindow());
+					}
+				});
+
 				propertiesItem.setAction(new Action() {
 					@Override
 					public void perform(Component source) {
@@ -188,10 +210,10 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 					section.add(newQuestionItem);
 				if (question.isStaticOptionList())
 					section.add(newOptionItem);
+				section.add(validationRuleItem);
 				section.add(propertiesItem);
 			} else if (clickedObject instanceof Option) {
 
-				@SuppressWarnings("unchecked")
 				final List<Option> optionList = (List<Option>) clickedParent;
 				final Option option = (Option) clickedObject;
 

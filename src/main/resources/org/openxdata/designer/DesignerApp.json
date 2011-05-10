@@ -50,9 +50,9 @@
 	optionVariableNameLabel: "Binding",
 	dynamicOptionDialogTitle: "Dynamic Options",
 	skipRuleDialogTitle: "Skip Rules",
-	skipRuleConditionOperatorNullLabel: "One",
-	skipRuleConditionOperatorAndLabel: "All",
-	skipRuleConditionOperatorOrLabel: "Any",
+	conditionsOperatorNullLabel: "One",
+	conditionsOperatorAndLabel: "All",
+	conditionsOperatorOrLabel: "Any",
 	skipRuleActionShowLabel: "Show",
 	skipRuleActionHideLabel: "Hide",
 	skipRuleActionDisableLabel: "Disable",
@@ -71,4 +71,5 @@
 	conditionOperatorNotContainLabel: "Does not Contain",
 	conditionFunctionValueLabel: "Value",
 	conditionFunctionLengthLabel: "Length",
+	validationRuleDialogTitle: "Validation Rule",
 }
