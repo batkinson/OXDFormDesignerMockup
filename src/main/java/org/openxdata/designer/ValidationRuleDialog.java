@@ -248,6 +248,7 @@ public class ValidationRuleDialog extends Dialog implements Bindable {
 				.getValidationRule(getQuestion().getId());
 		if (rule == null) {
 			rule = new ValidationRule();
+			rule.setQuestionId(getQuestion().getId());
 			getForm().getValidationRules().add(rule);
 		}
 
