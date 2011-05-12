@@ -1,6 +1,7 @@
 package org.openxdata.designer.util;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
@@ -11,10 +12,13 @@ import org.apache.pivot.collections.List;
 import org.apache.pivot.collections.ListListener;
 import org.apache.pivot.collections.Sequence;
 import org.apache.pivot.util.ListenerList;
+import org.fcitmuk.epihandy.Condition;
 import org.fcitmuk.epihandy.DynamicOptionDef;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.PageDef;
+import org.fcitmuk.epihandy.SkipRule;
+import org.fcitmuk.epihandy.ValidationRule;
 import org.openxdata.designer.idgen.DefaultIdGenerator;
 import org.openxdata.designer.idgen.ScarceIdGenerator;
 
@@ -63,7 +67,42 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 			}
 		}
 
-		// TODO: Patch up other references
+		// Patch up question id references that changed
+		Map<Short, Short> globalIdMap = new HashMap<Short, Short>();
+		for (Page p : this) {
+			globalIdMap.putAll(p.getModifiedQuestionIds());
+		}
+
+		for (ValidationRule validationRule : (Vector<ValidationRule>) getValidationRules()) {
+			if (globalIdMap.keySet().contains(validationRule.getQuestionId())) {
+				validationRule.setQuestionId(globalIdMap.get(validationRule
+						.getQuestionId()));
+				for (Condition condition : (Vector<Condition>) validationRule
+						.getConditions()) {
+					if (globalIdMap.keySet()
+							.contains(condition.getQuestionId())) {
+						condition.setQuestionId(globalIdMap.get(condition
+								.getQuestionId()));
+					}
+				}
+			}
+		}
+
+		for (SkipRule skipRule : (Vector<SkipRule>) getSkipRules()) {
+			for (Condition condition : (Vector<Condition>) skipRule
+					.getConditions()) {
+				if (globalIdMap.containsKey(condition.getQuestionId())) {
+					condition.setQuestionId(globalIdMap.get(condition
+							.getQuestionId()));
+				}
+			}
+			Vector<Short> actionTargets = skipRule.getActionTargets();
+			for (int i = 0; i < actionTargets.size(); i++) {
+				if (globalIdMap.containsKey(actionTargets.get(i))) {
+					actionTargets.set(i, globalIdMap.get(actionTargets.get(i)));
+				}
+			}
+		}
 	}
 
 	@Override

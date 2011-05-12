@@ -1,7 +1,9 @@
 package org.openxdata.designer.util;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.pivot.collections.ArrayList;
@@ -17,6 +19,8 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		List<Question> {
 
 	private ScarceIdGenerator questionIdGen;
+
+	private Map<Short, Short> modifiedQuestionIds = new HashMap<Short, Short>();
 
 	public Page() {
 		this("Unnamed Question", (short) -1, new Vector<Question>());
@@ -37,7 +41,13 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		for (int i = 0; i < questions.size(); i++) {
 			QuestionDef questionDef = questions.elementAt(i);
 			Question question = new Question(questionIdGen, questionDef);
+
+			short origQuestionId = questionDef.getId();
 			short questionId = (short) questionIdGen.nextId();
+
+			if (origQuestionId != questionId)
+				modifiedQuestionIds.put(origQuestionId, questionId);
+
 			question.setId(questionId);
 			questions.setElementAt(question, i);
 			idGen.reserveId(question.getId());
@@ -188,4 +198,7 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		return listenerList;
 	}
 
+	public Map<Short, Short> getModifiedQuestionIds() {
+		return modifiedQuestionIds;
+	}
 }
