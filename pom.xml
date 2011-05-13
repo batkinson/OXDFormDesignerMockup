@@ -123,7 +123,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>org.openxdata.designer.Main</mainClass>
+							<mainClass>${application.mainclass}</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -159,6 +159,8 @@
 		<keystore.alias>oneoff</keystore.alias>
 		<keystore.location>${project.build.directory}/oneoff-keystore</keystore.location>
 		<keystore.password>oneoffpass</keystore.password>
+		<application.mainclass>org.openxdata.designer.Main</application.mainclass>
+		<application.appclass>org.openxdata.designer.DesignerApp</application.appclass>
 	</properties>
 
 </project>
