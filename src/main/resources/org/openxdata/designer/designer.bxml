@@ -114,6 +114,9 @@
 									if (keyCode == Keyboard.KeyCode.V && Keyboard.isPressed(Platform.getCommandModifier())) {
 										application.paste();
 									}
+									if (keyCode == Keyboard.KeyCode.U && Keyboard.isPressed(Platform.getCommandModifier())) {
+									    application.upload();
+									}
 								}
 								]]>
 							</componentKeyListeners>

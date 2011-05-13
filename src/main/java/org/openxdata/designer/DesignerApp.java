@@ -4,12 +4,15 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.net.URL;
 import java.util.Locale;
 
 import org.apache.pivot.beans.BXML;
@@ -21,19 +24,30 @@ import org.apache.pivot.collections.Map;
 import org.apache.pivot.collections.Sequence;
 import org.apache.pivot.io.FileList;
 import org.apache.pivot.serialization.SerializationException;
+import org.apache.pivot.serialization.Serializer;
 import org.apache.pivot.util.Resources;
+import org.apache.pivot.util.concurrent.TaskListener;
+import org.apache.pivot.web.PostQuery;
+import org.apache.pivot.web.QueryException;
+import org.apache.pivot.wtk.Alert;
 import org.apache.pivot.wtk.Application;
+import org.apache.pivot.wtk.BoxPane;
 import org.apache.pivot.wtk.CardPane;
 import org.apache.pivot.wtk.Clipboard;
+import org.apache.pivot.wtk.Dialog;
+import org.apache.pivot.wtk.DialogCloseListener;
 import org.apache.pivot.wtk.Display;
 import org.apache.pivot.wtk.DropAction;
 import org.apache.pivot.wtk.HorizontalAlignment;
 import org.apache.pivot.wtk.Label;
 import org.apache.pivot.wtk.Manifest;
 import org.apache.pivot.wtk.MenuHandler;
+import org.apache.pivot.wtk.MessageType;
+import org.apache.pivot.wtk.Orientation;
 import org.apache.pivot.wtk.Prompt;
 import org.apache.pivot.wtk.TableView;
 import org.apache.pivot.wtk.TextArea;
+import org.apache.pivot.wtk.TextInput;
 import org.apache.pivot.wtk.Theme;
 import org.apache.pivot.wtk.TreeView;
 import org.apache.pivot.wtk.VerticalAlignment;
@@ -57,6 +71,7 @@ import org.openxdata.designer.util.Question;
  */
 public class DesignerApp implements Application {
 
+	public static String uploadHost = "http://oxdcirrus.appspot.com/upload/sampleform";
 	public static final String LANGUAGE_KEY = "language";
 	public static final String APPLICATION_KEY = "application";
 
@@ -161,6 +176,92 @@ public class DesignerApp implements Application {
 
 			window.setTitle((String) resources.get("title"));
 		}
+	}
+
+	public void upload() throws IOException, QueryException {
+
+		BoxPane inputPane = new BoxPane(Orientation.VERTICAL);
+		final TextInput uploadInput = new TextInput();
+		uploadInput.setText(uploadHost);
+		inputPane.add(new Label("Upload URL:"));
+		inputPane.add(uploadInput);
+
+		Alert.alert(MessageType.QUESTION, "Please enter the URL to upload to:",
+				inputPane, window, new DialogCloseListener() {
+					@Override
+					public void dialogClosed(Dialog dialog, boolean modal) {
+
+						try {
+							uploadHost = uploadInput.getText();
+							URL uploadUrl = new URL(uploadHost);
+							int uploadPort = uploadUrl.getPort();
+							String uploadPath = uploadUrl.getPath();
+							final PostQuery query = new PostQuery(uploadUrl
+									.getHost(), uploadPort == -1 ? 80
+									: uploadPort, uploadPath, false);
+							Form form = (Form) Sequence.Tree.get(
+									designTree.getTreeData(),
+									new Sequence.Tree.Path(0));
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							DataOutputStream dos = new DataOutputStream(baos);
+
+							form.write(dos);
+
+							byte[] contents = baos.toByteArray();
+							query.setValue(contents);
+							query.setSerializer(new Serializer<byte[]>() {
+								public String getMIMEType(byte[] object) {
+									return "application/octet-stream";
+								};
+
+								@Override
+								public byte[] readObject(InputStream inputStream)
+										throws IOException,
+										SerializationException {
+									// TODO Auto-generated method stub
+									return null;
+								}
+
+								public void writeObject(byte[] object,
+										java.io.OutputStream outputStream)
+										throws IOException,
+										SerializationException {
+									outputStream.write(object);
+								};
+							});
+							query.execute(new TaskListener<URL>() {
+
+								@Override
+								public void taskExecuted(
+										org.apache.pivot.util.concurrent.Task<URL> task) {
+									Prompt.prompt(MessageType.INFO,
+											"Successfully uploaded form.",
+											window);
+								}
+
+								@Override
+								public void executeFailed(
+										org.apache.pivot.util.concurrent.Task<URL> task) {
+									Prompt.prompt(MessageType.ERROR,
+											"Failed to upload form with status: "
+													+ query.getStatus()
+													+ " - "
+													+ query.getFault()
+															.getMessage(),
+											window);
+								}
+							});
+						} catch (IOException e) {
+							Prompt.prompt(
+									MessageType.ERROR,
+									"Failed to write form to stream: "
+											+ e.getMessage(), window);
+							return;
+						}
+					}
+
+				});
+
 	}
 
 	public Sequence.Tree.Path adjustPathForRemovedSibling(
