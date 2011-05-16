@@ -26,6 +26,8 @@ import org.apache.pivot.io.FileList;
 import org.apache.pivot.serialization.SerializationException;
 import org.apache.pivot.serialization.Serializer;
 import org.apache.pivot.util.Resources;
+import org.apache.pivot.util.concurrent.Task;
+import org.apache.pivot.util.concurrent.TaskExecutionException;
 import org.apache.pivot.util.concurrent.TaskListener;
 import org.apache.pivot.web.PostQuery;
 import org.apache.pivot.web.QueryException;
@@ -46,6 +48,7 @@ import org.apache.pivot.wtk.MessageType;
 import org.apache.pivot.wtk.Orientation;
 import org.apache.pivot.wtk.Prompt;
 import org.apache.pivot.wtk.TableView;
+import org.apache.pivot.wtk.TaskAdapter;
 import org.apache.pivot.wtk.TextArea;
 import org.apache.pivot.wtk.TextInput;
 import org.apache.pivot.wtk.Theme;
@@ -104,60 +107,105 @@ public class DesignerApp implements Application {
 
 	private Resources resources;
 
-	public void startup(Display display, Map<String, String> properties)
-			throws Exception {
+	public void startup(final Display display,
+			final Map<String, String> properties) throws Exception {
 
-		String language = properties.get(LANGUAGE_KEY);
-		locale = (language == null) ? Locale.getDefault()
-				: new Locale(language);
-		resources = new Resources(getClass().getName(), locale);
+		// Show window and then load asynchronously
+		final Window loadingWindow = new Window();
+		Label loadingLabel = new Label("Loading...");
+		loadingLabel.getStyles().put("font", new Font("Arial", Font.BOLD, 24));
+		loadingLabel.getStyles().put("horizontalAlignment",
+				HorizontalAlignment.CENTER);
+		loadingLabel.getStyles().put("verticalAlignment",
+				VerticalAlignment.CENTER);
 
-		Theme theme = Theme.getTheme();
-		Font font = theme.getFont();
+		loadingWindow.setContent(loadingLabel);
+		loadingWindow.setMaximized(true);
+		loadingWindow.open(display);
 
-		// Search for a font that can support the sample string
-		String sampleResource = (String) resources.get("greeting");
-		if (font.canDisplayUpTo(sampleResource) != -1) {
-			Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment()
-					.getAllFonts();
+		Task<Void> startupTask = new Task<Void>() {
+			@Override
+			public Void execute() throws TaskExecutionException {
+				try {
+					String language = properties.get(LANGUAGE_KEY);
+					locale = (language == null) ? Locale.getDefault()
+							: new Locale(language);
+					resources = new Resources(DesignerApp.class.getName(),
+							locale);
 
-			for (int i = 0; i < fonts.length; i++) {
-				if (fonts[i].canDisplayUpTo(sampleResource) == -1) {
-					theme.setFont(fonts[i].deriveFont(Font.PLAIN, 12));
-					break;
+					Theme theme = Theme.getTheme();
+					Font font = theme.getFont();
+
+					// Search for a font that can support the sample string
+					String sampleResource = (String) resources.get("greeting");
+					if (font.canDisplayUpTo(sampleResource) != -1) {
+						Font[] fonts = GraphicsEnvironment
+								.getLocalGraphicsEnvironment().getAllFonts();
+
+						for (int i = 0; i < fonts.length; i++) {
+							if (fonts[i].canDisplayUpTo(sampleResource) == -1) {
+								theme.setFont(fonts[i].deriveFont(Font.PLAIN,
+										12));
+								break;
+							}
+						}
+					}
+
+					BXMLSerializer bxmlSerializer = new BXMLSerializer();
+
+					// Install this object as "application" in the default
+					// namespace
+					bxmlSerializer.getNamespace().put(APPLICATION_KEY,
+							DesignerApp.this);
+
+					window = (Window) bxmlSerializer.readObject(
+							DesignerApp.class.getResource("designer.bxml"),
+							resources);
+
+					// Apply the binding annotations to this object
+					bxmlSerializer.bind(DesignerApp.this);
+
+					// Apply the binding annotations to the menu handler
+					MenuHandler designMenuHandler = designTree.getMenuHandler();
+					if (designMenuHandler != null)
+						bxmlSerializer.bind(designMenuHandler);
+
+					MenuHandler dynOptMenuHandler = dynamicOptionTree
+							.getMenuHandler();
+					if (dynOptMenuHandler != null)
+						bxmlSerializer.bind(dynOptMenuHandler);
+
+					Label prompt = new Label("Drag or paste XML here");
+					prompt.getStyles().put("horizontalAlignment",
+							HorizontalAlignment.CENTER);
+					prompt.getStyles().put("verticalAlignment",
+							VerticalAlignment.CENTER);
+					promptDecorator.setOverlay(prompt);
+					formTree.getDecorators().add(promptDecorator);
+					designTree.getDecorators().add(promptDecorator);
+
+					window.open(display);
+
+					return null;
+				} catch (Exception e) {
+					throw new TaskExecutionException(
+							"Failed to start application", e);
 				}
 			}
-		}
+		};
 
-		BXMLSerializer bxmlSerializer = new BXMLSerializer();
+		startupTask.execute(new TaskAdapter<Void>(new TaskListener<Void>() {
+			@Override
+			public void executeFailed(Task<Void> task) {
+				Prompt.prompt(MessageType.ERROR, task.getFault().getMessage(),
+						loadingWindow);
+			}
 
-		// Install this object as "application" in the default namespace
-		bxmlSerializer.getNamespace().put(APPLICATION_KEY, this);
-
-		window = (Window) bxmlSerializer.readObject(
-				DesignerApp.class.getResource("designer.bxml"), resources);
-
-		// Apply the binding annotations to this object
-		bxmlSerializer.bind(this);
-
-		// Apply the binding annotations to the menu handler
-		MenuHandler designMenuHandler = designTree.getMenuHandler();
-		if (designMenuHandler != null)
-			bxmlSerializer.bind(designMenuHandler);
-
-		MenuHandler dynOptMenuHandler = dynamicOptionTree.getMenuHandler();
-		if (dynOptMenuHandler != null)
-			bxmlSerializer.bind(dynOptMenuHandler);
-
-		Label prompt = new Label("Drag or paste XML here");
-		prompt.getStyles().put("horizontalAlignment",
-				HorizontalAlignment.CENTER);
-		prompt.getStyles().put("verticalAlignment", VerticalAlignment.CENTER);
-		promptDecorator.setOverlay(prompt);
-		formTree.getDecorators().add(promptDecorator);
-		designTree.getDecorators().add(promptDecorator);
-
-		window.open(display);
+			@Override
+			public void taskExecuted(Task<Void> task) {
+				loadingWindow.close();
+			}
+		}));
 	}
 
 	public void paste() {
