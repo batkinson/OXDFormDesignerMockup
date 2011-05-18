@@ -34,7 +34,7 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 	{
 		// Ensure the repeat's nested vector isn't null
 		repeatQuestions.setQuestions(new Vector<Question>());
-		optionIdGen = new DefaultIdGenerator(1, Short.MAX_VALUE);
+		optionIdGen = new DefaultIdGenerator(0, Short.MAX_VALUE);
 	}
 
 	public Question() {
