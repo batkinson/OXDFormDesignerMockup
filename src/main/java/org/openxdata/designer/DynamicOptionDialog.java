@@ -225,15 +225,14 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 			Hashtable<Short, Vector<OptionDef>> pcOpts,
 			java.util.Collection<OptionDef> possibleParentValues) {
 		List<DynamicOption> treeData = new ArrayList<DynamicOption>();
-		for (Map.Entry<Short, Vector<OptionDef>> entry : pcOpts.entrySet()) {
-			for (OptionDef option : possibleParentValues) {
-				if (option.getId() == entry.getKey()) {
-					DynamicOption dynOption = new DynamicOption((Option) option);
-					for (OptionDef value : entry.getValue())
-						dynOption.add(new Option(value));
-					treeData.add(dynOption);
-				}
+		for (OptionDef option : possibleParentValues) {
+			DynamicOption dynOption = new DynamicOption((Option) option);
+			if (pcOpts.containsKey(option.getId())) {
+				Vector<OptionDef> dependenOptions = pcOpts.get(option.getId());
+				for (OptionDef value : dependenOptions)
+					dynOption.add(new Option(value));
 			}
+			treeData.add(dynOption);
 		}
 		return treeData;
 	}
