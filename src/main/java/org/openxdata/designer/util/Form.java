@@ -73,6 +73,36 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 			globalIdMap.putAll(p.getModifiedQuestionIds());
 		}
 
+		Hashtable<Short, DynamicOptionDef> renamedOptionMap = (Hashtable<Short, DynamicOptionDef>) getDynamicOptions();
+		if (dynOptionMap != null) {
+			for (Map.Entry<Short, DynamicOptionDef> entry : dynOptionMap
+					.entrySet()) {
+
+				Short sourceQuestionId = entry.getKey();
+				DynamicOptionDef optionDef = entry.getValue();
+
+				boolean sourceMoved = globalIdMap.containsKey(sourceQuestionId);
+				boolean targetMoved = globalIdMap.containsKey(optionDef
+						.getQuestionId());
+
+				if (sourceMoved && targetMoved) {
+					optionDef.setQuestionId(globalIdMap.get(optionDef
+							.getQuestionId()));
+					renamedOptionMap.put(globalIdMap.get(entry.getKey()),
+							optionDef);
+					dynOptionMap.remove(entry.getKey());
+				} else if (sourceMoved) {
+					renamedOptionMap.put(globalIdMap.get(entry.getKey()),
+							entry.getValue());
+					dynOptionMap.remove(entry.getKey());
+				} else if (targetMoved) {
+					optionDef.setQuestionId(globalIdMap.get(optionDef
+							.getQuestionId()));
+				}
+			}
+		}
+		dynOptionMap.putAll(renamedOptionMap);
+
 		for (ValidationRule validationRule : (Vector<ValidationRule>) getValidationRules()) {
 			if (globalIdMap.keySet().contains(validationRule.getQuestionId())) {
 				validationRule.setQuestionId(globalIdMap.get(validationRule
