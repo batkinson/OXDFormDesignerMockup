@@ -20,6 +20,8 @@ import org.apache.pivot.wtk.PushButton;
 import org.apache.pivot.wtk.TreeView;
 import org.fcitmuk.epihandy.DynamicOptionDef;
 import org.fcitmuk.epihandy.OptionDef;
+import org.openxdata.designer.idgen.DefaultIdGenerator;
+import org.openxdata.designer.idgen.ScarceIdGenerator;
 import org.openxdata.designer.util.DynamicOption;
 import org.openxdata.designer.util.Form;
 import org.openxdata.designer.util.Option;
@@ -40,6 +42,8 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 	@BXML
 	private ListButton parentQuestionListButton;
 
+	private ScarceIdGenerator dynOptIdGen = new DefaultIdGenerator();
+
 	public void initialize(
 			org.apache.pivot.collections.Map<String, Object> namespace,
 			URL location, Resources resources) {
@@ -55,6 +59,9 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 							Question parentQuestion = (Question) selectedItem;
 							List<DynamicOption> treeData = getDynamicOptionTree(
 									getForm(), getQuestion(), parentQuestion);
+							int startingId = getMaxId(treeData) + 1;
+							dynOptIdGen = new DefaultIdGenerator(startingId,
+									Short.MAX_VALUE);
 							dynamicOptionTree.setTreeData(treeData);
 						}
 					}
@@ -68,6 +75,15 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 				close();
 			}
 		});
+	}
+
+	private int getMaxId(List<DynamicOption> treeData) {
+		int max = 0;
+		for (DynamicOption dynOpt : treeData)
+			for (Option opt : dynOpt)
+				if (opt.getId() > max)
+					max = opt.getId();
+		return max;
 	}
 
 	public Form getForm() {
@@ -127,6 +143,10 @@ public class DynamicOptionDialog extends Dialog implements Bindable {
 		work.put(parentQuestion, treeData);
 
 		return treeData;
+	}
+
+	public ScarceIdGenerator getIdGenerator() {
+		return dynOptIdGen;
 	}
 
 	private List<Question> getPossibleParents(Form form, Question question) {

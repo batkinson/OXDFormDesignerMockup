@@ -6,18 +6,22 @@ import org.apache.pivot.collections.List;
 import org.apache.pivot.collections.Sequence;
 import org.apache.pivot.wtk.Action;
 import org.apache.pivot.wtk.Component;
-import org.apache.pivot.wtk.Dialog;
 import org.apache.pivot.wtk.Menu;
 import org.apache.pivot.wtk.Menu.Section;
 import org.apache.pivot.wtk.MenuBar;
 import org.apache.pivot.wtk.TreeView;
+import org.openxdata.designer.DynamicOptionDialog;
+import org.openxdata.designer.OptionDialog;
 import org.openxdata.designer.util.DynamicOption;
 import org.openxdata.designer.util.Option;
 
 public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 
 	@BXML
-	private Dialog optionDialog;
+	private DynamicOptionDialog dynamicOptionDialog;
+
+	@BXML
+	private OptionDialog optionDialog;
 
 	public void configureMenuBar(Component component, MenuBar menuBar) {
 	}
@@ -48,7 +52,10 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 			addOptionItem.setAction(new Action() {
 				@Override
 				public void perform(Component source) {
-					dynOption.add(new Option());
+					Option option = new Option();
+					option.setId((short) dynamicOptionDialog.getIdGenerator()
+							.nextId());
+					dynOption.add(option);
 				}
 			});
 
@@ -65,6 +72,8 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 				@Override
 				public void perform(Component source) {
 					dynOption.remove(option);
+					dynamicOptionDialog.getIdGenerator().makeIdAvailable(
+							option.getId());
 				}
 			});
 
