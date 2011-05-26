@@ -52,12 +52,9 @@
 
 	<repositories>
 		<repository>
-			<id>oxd-thirdparty</id>
-			<name>OpenXData 3rd Party Repository</name>
-			<url>http://nexus.openxdata.org/content/repositories/thirdparty</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
+			<id>oxd-public</id>
+			<name>OpenXData Public Repository</name>
+			<url>http://nexus.openxdata.org/content/groups/public</url>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
@@ -66,12 +63,9 @@
 
 	<pluginRepositories>
 		<pluginRepository>
-			<id>oxd-releases</id>
-			<name>OpenXData Release Repository</name>
-			<url>http://nexus.openxdata.org/content/repositories/releases</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
+			<id>oxd-public</id>
+			<name>OpenXData Public Repository</name>
+			<url>http://nexus.openxdata.org/content/groups/public</url>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
