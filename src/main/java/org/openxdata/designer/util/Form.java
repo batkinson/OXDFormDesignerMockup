@@ -73,8 +73,8 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 			globalIdMap.putAll(p.getModifiedQuestionIds());
 		}
 
-		Hashtable<Short, DynamicOptionDef> renamedOptionMap = (Hashtable<Short, DynamicOptionDef>) getDynamicOptions();
 		if (dynOptionMap != null) {
+			Hashtable<Short, DynamicOptionDef> renamedOptionMap = (Hashtable<Short, DynamicOptionDef>) getDynamicOptions();
 			for (Map.Entry<Short, DynamicOptionDef> entry : dynOptionMap
 					.entrySet()) {
 
@@ -100,8 +100,8 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 							.getQuestionId()));
 				}
 			}
+			dynOptionMap.putAll(renamedOptionMap);
 		}
-		dynOptionMap.putAll(renamedOptionMap);
 
 		for (ValidationRule validationRule : (Vector<ValidationRule>) getValidationRules()) {
 			if (globalIdMap.keySet().contains(validationRule.getQuestionId())) {
