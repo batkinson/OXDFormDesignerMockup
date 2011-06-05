@@ -9,8 +9,8 @@
 	<name>OpenXdata Form Designer</name>
 	<url>http://openxdata.org</url>
 	<description>
-	An embeddable xforms form designer for use with openxdata.
-    </description>
+		An embeddable xforms form designer for use with openxdata.
+	</description>
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.pivot</groupId>
@@ -81,7 +81,7 @@
 			<resource>
 				<directory>src/main/html</directory>
 				<filtering>true</filtering>
-				<targetPath>${project.build.directory}</targetPath>
+				<targetPath>../</targetPath>
 			</resource>
 		</resources>
 		<plugins>
