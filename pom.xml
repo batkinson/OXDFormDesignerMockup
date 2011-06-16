@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>org.openxdata</groupId>
 			<artifactId>epihandy-xforms-server</artifactId>
-			<version>0.9.2</version>
+			<version>0.9.3</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
