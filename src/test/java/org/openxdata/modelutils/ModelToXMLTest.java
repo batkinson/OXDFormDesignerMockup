@@ -11,8 +11,12 @@ import junit.framework.TestCase;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.xform.EpihandyXform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ModelToXMLTest extends TestCase {
+
+	private static Logger log = LoggerFactory.getLogger(ModelToXMLTest.class);
 
 	FormDef sampleDef;
 	String sampleXml;
@@ -31,7 +35,9 @@ public class ModelToXMLTest extends TestCase {
 			buf.append('\n');
 			sampleXml = buf.toString();
 		} catch (IOException e) {
-			throw new RuntimeException("Failed to read in sample.xml");
+			String msg = "Failed to read in sample.xml";
+			log.error(msg, e);
+			throw new RuntimeException(msg);
 		}
 
 		sampleDef = EpihandyXform

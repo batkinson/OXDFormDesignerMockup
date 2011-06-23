@@ -7,8 +7,12 @@ import java.util.Vector;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.QuestionDef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ModelToXML {
+
+	private static Logger log = LoggerFactory.getLogger(ModelToXML.class);
 
 	@SuppressWarnings("unchecked")
 	public static String convert(FormDef formDef) {
@@ -112,7 +116,10 @@ public class ModelToXML {
 
 		buf.append("</xf:xforms>");
 		buf.append('\n');
-		System.err.println(buf.toString());
+
+		if (log.isDebugEnabled())
+			log.debug("converted form:\n" + buf.toString());
+
 		return buf.toString();
 	}
 }
