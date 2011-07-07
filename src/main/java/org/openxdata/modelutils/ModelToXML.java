@@ -59,6 +59,14 @@ public class ModelToXML {
 					if ("".equals(tree[i])
 							|| formDef.getVariableName().equals(tree[i]))
 						continue;
+
+					if (tree.length > 3 && stack.size() > 0)
+						buf.append('\n');
+
+					for (int depth = 0; depth < stack.size(); depth++)
+						buf.append('\t');
+
+					buf.append("\t\t\t\t");
 					buf.append('<');
 					buf.append(tree[i]);
 					buf.append('>');
@@ -66,6 +74,11 @@ public class ModelToXML {
 				}
 				while (!stack.isEmpty()) {
 					String item = stack.pop();
+					if (tree.length > 3) {
+						for (int depth = 0; depth < stack.size(); depth++)
+							buf.append('\t');
+						buf.append("\t\t\t\t");
+					}
 					buf.append("</");
 					buf.append(item);
 					buf.append('>');
