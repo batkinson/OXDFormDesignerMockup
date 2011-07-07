@@ -103,7 +103,6 @@ public class ModelToXMLTest extends TestCase {
 		String[] exprs = {
 				"count(//xf:bind[@id='patientid' and @nodeset='/patientreg/patientid' and @type='xsd:string'])",
 				"count(//xf:bind[@id='picture' and @nodeset='/patientreg/picture' and @type='xsd:base64Binary' and @format='image'])",
-				"count(//xf:bind[@id='picture' and @nodeset='/patientreg/picture' and @type='xsd:base64Binary' and @format='image'])",
 				"count(//xf:bind[@id='coughsound' and @nodeset='/patientreg/coughsound' and @format='audio' and @type='xsd:base64Binary'])",
 				"count(//xf:bind[@id='recordvideo' and @nodeset='/patientreg/recordvideo' and @format='video' and @type='xsd:base64Binary'])",
 				"count(//xf:bind[@id='location' and @nodeset='/patientreg/location' and @format='gps' and @type='xsd:string'])",
@@ -119,6 +118,46 @@ public class ModelToXMLTest extends TestCase {
 			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
 					XPathConstants.NUMBER);
 			assertEquals(expr + " unique binding not present ", 1,
+					matchCount.intValue());
+		}
+	}
+
+	public void testBoundInputConversion() throws Exception {
+		String[] oneCountexprs = { "count(//xf:input[@bind='patientid'])",
+				"count(//xf:input[@bind='location'])",
+				"count(//xf:input[@bind='phone'])",
+				"count(//xf:input[@bind='weight'])",
+				"count(//xf:input[@bind='height'])",
+				"count(//xf:input[@bind='birthdate'])",
+				"count(//xf:input[@bind='starttime'])",
+				"count(//xf:input[@bind='visitdate'])" };
+		for (String expr : oneCountexprs) {
+			convertedStream.reset(); // Restore stream state
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " input not present ", 1, matchCount.intValue());
+		}
+
+		String[] zeroCountExprs = { "count(//xf:input[@bind='kid'])",
+				"count(//xf:input[@bind='kidsex'])",
+				"count(//xf:input[@bind='kidage'])",
+				"count(//xf:input[@bind='title'])",
+				"count(//xf:input[@bind='sex'])",
+				"count(//xf:input[@bind='arvs'])",
+				"count(//xf:input[@bind='picture'])",
+				"count(//xf:input[@bind='coughsound'])",
+				"count(//xf:input[@bind='recordvideo'])",
+				"count(//xf:input[@bind='continent'])",
+				"count(//xf:input[@bind='country'])",
+				"count(//xf:input[@bind='district'])",
+				"count(//xf:input[@bind='village'])" };
+		for (String expr : zeroCountExprs) {
+			convertedStream.reset(); // Restore stream state
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " input should not be present ", 0,
 					matchCount.intValue());
 		}
 	}

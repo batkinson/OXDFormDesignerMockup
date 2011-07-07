@@ -137,6 +137,7 @@ public class ModelToXML {
 			buf.append('\n');
 
 			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
+
 				if (q.getType() == QuestionDef.QTN_TYPE_REPEAT) {
 					buf.append(MessageFormat.format(
 							"\t\t<xf:group id=\"{0}\">", q.getVariableName()));
@@ -145,9 +146,11 @@ public class ModelToXML {
 							"\t\t\t<xf:label>{0}</xf:label>", q.getText()));
 					buf.append('\n');
 					buf.append("\t\t</xf:group>");
-				} else if (q.getType() == QuestionDef.QTN_TYPE_TEXT) {
+				} else if (questionTypeGeneratesBoundInput(q.getType())) {
+					String[] tree = q.getVariableName().split("/\\s*");
+					String qid = tree[tree.length - 1];
 					buf.append(MessageFormat.format(
-							"\t\t<xf:input bind=\"{0}\">", q.getVariableName()));
+							"\t\t<xf:input bind=\"{0}\">", qid));
 					buf.append('\n');
 					buf.append(MessageFormat.format(
 							"\t\t\t<xf:label>{0}</xf:label>", q.getText()));
@@ -251,6 +254,21 @@ public class ModelToXML {
 			return PHONENUMBER_BINDFORMAT;
 		default:
 			return null;
+		}
+	}
+
+	public static boolean questionTypeGeneratesBoundInput(byte type) {
+		switch (type) {
+		case QuestionDef.QTN_TYPE_AUDIO:
+		case QuestionDef.QTN_TYPE_VIDEO:
+		case QuestionDef.QTN_TYPE_IMAGE:
+		case QuestionDef.QTN_TYPE_LIST_EXCLUSIVE:
+		case QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC:
+		case QuestionDef.QTN_TYPE_LIST_MULTIPLE:
+		case QuestionDef.QTN_TYPE_REPEAT:
+			return false;
+		default:
+			return true;
 		}
 	}
 }
