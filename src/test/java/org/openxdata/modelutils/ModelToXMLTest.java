@@ -1,10 +1,16 @@
 package org.openxdata.modelutils;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 
 import junit.framework.TestCase;
 
@@ -13,6 +19,7 @@ import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.xform.EpihandyXform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
 
 public class ModelToXMLTest extends TestCase {
 
@@ -20,6 +27,11 @@ public class ModelToXMLTest extends TestCase {
 
 	FormDef sampleDef;
 	String sampleXml;
+	String convertedXml;
+	FormDef reparsedDef;
+	InputStream convertedStream;
+	InputSource convertedSource;
+	XPath xpath;
 
 	{
 		InputStream sampleStream = ModelToXMLTest.class
@@ -42,6 +54,18 @@ public class ModelToXMLTest extends TestCase {
 
 		sampleDef = EpihandyXform
 				.fromXform2FormDef(new StringReader(sampleXml));
+
+		convertedXml = ModelToXML.convert(sampleDef);
+
+		reparsedDef = EpihandyXform.fromXform2FormDef(new StringReader(
+				convertedXml));
+
+		convertedStream = new ByteArrayInputStream(convertedXml.getBytes());
+		convertedSource = new InputSource(convertedStream);
+
+		XPathFactory xpathFactory = javax.xml.xpath.XPathFactory.newInstance();
+		xpath = xpathFactory.newXPath();
+		xpath.setNamespaceContext(new NamespaceContext());
 	}
 
 	public void testNullConversion() {
@@ -53,25 +77,19 @@ public class ModelToXMLTest extends TestCase {
 	}
 
 	public void testFormConversion() {
-		String result = ModelToXML.convert(sampleDef);
-		FormDef formDef = EpihandyXform.fromXform2FormDef(new StringReader(
-				result));
-		assertEquals(sampleDef.getVariableName(), formDef.getVariableName());
+		assertEquals(sampleDef.getVariableName(), reparsedDef.getVariableName());
 		assertEquals(sampleDef.getDescriptionTemplate(),
-				formDef.getDescriptionTemplate());
-		assertEquals(sampleDef.getId(), formDef.getId());
-		assertEquals(sampleDef.getName(), formDef.getName());
+				reparsedDef.getDescriptionTemplate());
+		assertEquals(sampleDef.getId(), reparsedDef.getId());
+		assertEquals(sampleDef.getName(), reparsedDef.getName());
 	}
 
 	public void testPageConversion() {
-		String result = ModelToXML.convert(sampleDef);
-		FormDef formDef = EpihandyXform.fromXform2FormDef(new StringReader(
-				result));
 		assertEquals("page counts didn't match", sampleDef.getPageCount(),
-				formDef.getPageCount());
-		for (int i = 0; i < formDef.getPageCount(); i++) {
+				reparsedDef.getPageCount());
+		for (int i = 0; i < reparsedDef.getPageCount(); i++) {
 			PageDef samplePage = sampleDef.getPageAt(i);
-			PageDef reparsedPage = formDef.getPageAt(i);
+			PageDef reparsedPage = reparsedDef.getPageAt(i);
 			assertNotNull("original page should not be null", samplePage);
 			assertNotNull("reparsed page should not be null", reparsedPage);
 			assertEquals("page numbers should mach", samplePage.getPageNo(),
@@ -81,4 +99,27 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	public void testBindingConversion() throws Exception {
+		String[] exprs = {
+				"count(//xf:bind[@id='patientid' and @nodeset='/patientreg/patientid' and @type='xsd:string'])",
+				"count(//xf:bind[@id='picture' and @nodeset='/patientreg/picture' and @type='xsd:base64Binary' and @format='image'])",
+				"count(//xf:bind[@id='picture' and @nodeset='/patientreg/picture' and @type='xsd:base64Binary' and @format='image'])",
+				"count(//xf:bind[@id='coughsound' and @nodeset='/patientreg/coughsound' and @format='audio' and @type='xsd:base64Binary'])",
+				"count(//xf:bind[@id='recordvideo' and @nodeset='/patientreg/recordvideo' and @format='video' and @type='xsd:base64Binary'])",
+				"count(//xf:bind[@id='location' and @nodeset='/patientreg/location' and @format='gps' and @type='xsd:string'])",
+				"count(//xf:bind[@id='phone' and @nodeset='/patientreg/phone' and @format='phonenumber' and @type='xsd:string'])",
+				"count(//xf:bind[@id='weight' and @nodeset='/patientreg/weight' and @type='xsd:decimal'])",
+				"count(//xf:bind[@id='height' and @nodeset='/patientreg/height' and @type='xsd:int'])",
+				"count(//xf:bind[@id='birthdate' and @nodeset='/patientreg/birthdate' and @type='xsd:date'])",
+				"count(//xf:bind[@id='starttime' and @nodeset='/patientreg/starttime' and @type='xsd:time'])",
+				"count(//xf:bind[@id='visitdate' and @nodeset='/patientreg/visitdate' and @type='xsd:dateTime'])" };
+		for (String expr : exprs) {
+			convertedStream.reset(); // Restore stream state
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " unique binding not present ", 1,
+					matchCount.intValue());
+		}
+	}
 }

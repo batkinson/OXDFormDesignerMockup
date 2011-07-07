@@ -31,6 +31,8 @@
 				</kids>
 				<starttime>'today()'</starttime>
 				<endtime/>
+				<phone/>
+				<visitdate/>
 			</patientreg>
 		</xf:instance>
 		<xf:instance id="country">
@@ -192,6 +194,8 @@
 		<xf:bind action="enable" constraint="length(.) = patientreg/nokids" id="kid" message="Kid rows should be equal to the number of kids" nodeset="/patientreg/kids/kid" readonly="true()" relevant="/patientreg/nokids &gt; 0" required="false()"/>
 		<xf:bind id="starttime" nodeset="/patientreg/starttime" type="xsd:time"/>
 		<xf:bind id="endtime" nodeset="/patientreg/endtime" type="xsd:time"/>
+		<xf:bind format="phonenumber" id="phone" nodeset="/patientreg/phone" type="xsd:string" />
+		<xf:bind id="visitdate" nodeset="/patientreg/visitdate" type="xsd:dateTime" />
 	</xf:model>
 	<xf:group id="1">
 		<xf:label>Page1</xf:label>
@@ -356,5 +360,11 @@
 		<xf:input bind="endtime">	
 			<xf:label>End Time</xf:label>	
 		</xf:input>	
+		<xf:input bind="phone">
+			<xf:label>Phone</xf:label>
+		</xf:input>
+		<xf:input bind="visitdate">
+			<xf:label>Date of Visit</xf:label>
+		</xf:input>
 	</xf:group>
 </xf:xforms>
