@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.text.MessageFormat;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -123,37 +124,27 @@ public class ModelToXMLTest extends TestCase {
 	}
 
 	public void testBoundInputConversion() throws Exception {
-		String[] oneCountexprs = { "count(//xf:input[@bind='patientid'])",
-				"count(//xf:input[@bind='location'])",
-				"count(//xf:input[@bind='phone'])",
-				"count(//xf:input[@bind='weight'])",
-				"count(//xf:input[@bind='height'])",
-				"count(//xf:input[@bind='birthdate'])",
-				"count(//xf:input[@bind='starttime'])",
-				"count(//xf:input[@bind='visitdate'])" };
-		for (String expr : oneCountexprs) {
+
+		String matchPattern = "count(//xf:input[@bind=''{0}''])";
+		String[] matchQuestions = { "patientid", "location", "phone", "weight",
+				"height", "birthdate", "starttime", "visitdate" };
+
+		for (String matchQuestion : matchQuestions) {
 			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern, matchQuestion);
 			XPathExpression compiledExpr = xpath.compile(expr);
 			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
 					XPathConstants.NUMBER);
 			assertEquals(expr + " input not present ", 1, matchCount.intValue());
 		}
 
-		String[] zeroCountExprs = { "count(//xf:input[@bind='kid'])",
-				"count(//xf:input[@bind='kidsex'])",
-				"count(//xf:input[@bind='kidage'])",
-				"count(//xf:input[@bind='title'])",
-				"count(//xf:input[@bind='sex'])",
-				"count(//xf:input[@bind='arvs'])",
-				"count(//xf:input[@bind='picture'])",
-				"count(//xf:input[@bind='coughsound'])",
-				"count(//xf:input[@bind='recordvideo'])",
-				"count(//xf:input[@bind='continent'])",
-				"count(//xf:input[@bind='country'])",
-				"count(//xf:input[@bind='district'])",
-				"count(//xf:input[@bind='village'])" };
-		for (String expr : zeroCountExprs) {
+		String[] noMatchQuestions = { "kid", "kidsex", "kidage", "title",
+				"sex", "arvs", "picture", "coughsound", "recordvideo",
+				"continent", "country", "district", "village" };
+
+		for (String noMatchQuestion : noMatchQuestions) {
 			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern, noMatchQuestion);
 			XPathExpression compiledExpr = xpath.compile(expr);
 			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
 					XPathConstants.NUMBER);
