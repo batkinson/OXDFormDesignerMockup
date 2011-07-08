@@ -186,7 +186,26 @@ public class ModelToXMLTest extends TestCase {
 			XPathExpression compiledExpr = xpath.compile(expr);
 			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
 					XPathConstants.NUMBER);
-			assertEquals(expr + " upload not present ", 1,
+			assertEquals(expr + " select1 not present ", 1,
+					matchCount.intValue());
+		}
+	}
+
+	public void testMultiSelectListConversion() throws Exception {
+
+		String matchPattern = "count(//xf:select[@bind=''{0}'' and count(xf:item) = ''{1}''])";
+		String[] matchParams = { "arvs" };
+
+		for (String matchQuestion : matchParams) {
+			QuestionDef qDef = sampleDef.getQuestion("/patientreg/"
+					+ matchQuestion);
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern, matchQuestion,
+					Integer.toString(qDef.getOptions().size()));
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " select not present ", 1,
 					matchCount.intValue());
 		}
 	}
