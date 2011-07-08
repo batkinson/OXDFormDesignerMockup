@@ -7,6 +7,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -15,6 +18,7 @@ import javax.xml.xpath.XPathFactory;
 
 import junit.framework.TestCase;
 
+import org.fcitmuk.epihandy.DynamicOptionDef;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.QuestionDef;
@@ -23,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 
+@SuppressWarnings("unchecked")
 public class ModelToXMLTest extends TestCase {
 
 	private static Logger log = LoggerFactory.getLogger(ModelToXMLTest.class);
@@ -34,6 +39,7 @@ public class ModelToXMLTest extends TestCase {
 	InputStream convertedStream;
 	InputSource convertedSource;
 	XPath xpath;
+	Map<Short, QuestionDef> dynOptDepMap;
 
 	{
 		InputStream sampleStream = ModelToXMLTest.class
@@ -56,6 +62,13 @@ public class ModelToXMLTest extends TestCase {
 
 		sampleDef = EpihandyXform
 				.fromXform2FormDef(new StringReader(sampleXml));
+
+		Map<Short, QuestionDef> dynOptDepMap = new HashMap<Short, QuestionDef>();
+		for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) sampleDef
+				.getDynamicOptions().entrySet()) {
+			dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
+					sampleDef.getQuestion(dynOptEntry.getKey()));
+		}
 
 		convertedXml = ModelToXML.convert(sampleDef);
 
@@ -206,6 +219,24 @@ public class ModelToXMLTest extends TestCase {
 			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
 					XPathConstants.NUMBER);
 			assertEquals(expr + " select not present ", 1,
+					matchCount.intValue());
+		}
+	}
+
+	public void testDynamicListConversion() throws Exception {
+
+		String matchPattern = "count(//xf:select1[@bind=''{1}'']/xf:itemset[@nodeset=\"instance(''{1}'')/item[@parent=instance(''{0}'')/{2}]\"])";
+		String[][] matchParams = { { "country", "continent" },
+				{ "district", "country" }, { "village", "district" } };
+
+		for (String[] matchQuestion : matchParams) {
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern, "patientreg",
+					matchQuestion[0], matchQuestion[1]);
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " select1 not present ", 1,
 					matchCount.intValue());
 		}
 	}

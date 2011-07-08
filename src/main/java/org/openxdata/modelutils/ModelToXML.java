@@ -1,9 +1,13 @@
 package org.openxdata.modelutils;
 
 import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
 
+import org.fcitmuk.epihandy.DynamicOptionDef;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.PageDef;
@@ -35,6 +39,14 @@ public class ModelToXML {
 		StringBuilder buf = new StringBuilder();
 		if (formDef == null)
 			throw new IllegalArgumentException("form def can not be null");
+
+		Map<Short, QuestionDef> dynOptDepMap = new HashMap<Short, QuestionDef>();
+		for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) formDef
+				.getDynamicOptions().entrySet()) {
+			dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
+					formDef.getQuestion(dynOptEntry.getKey()));
+		}
+
 		buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>");
 		buf.append('\n');
 		buf.append("<xf:xforms xmlns:xf=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">");
@@ -152,7 +164,7 @@ public class ModelToXML {
 					buf.append(MessageFormat.format(
 							"\t\t\t<xf:label>{0}</xf:label>", qName));
 					buf.append('\n');
-					buf.append("\t\t</xf:group>");
+					buf.append("\t\t</xf:group>\n");
 				} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE) {
 					buf.append(MessageFormat.format(
 							"\t\t<xf:select1 bind=\"{0}\">", qId));
@@ -186,6 +198,23 @@ public class ModelToXML {
 						buf.append('\n');
 					}
 					buf.append("\t\t</xf:select>");
+					buf.append('\n');
+				} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
+					buf.append(MessageFormat.format(
+							"\t\t<xf:select1 bind=\"{0}\">", qId));
+					buf.append('\n');
+					buf.append(MessageFormat.format(
+							"\t\t\t<xf:label>{0}</xf:label>", qName));
+					buf.append('\n');
+					QuestionDef parentQuestion = dynOptDepMap.get(q.getId());
+					String[] parentTree = parentQuestion.getVariableName()
+							.split("/\\s*");
+					String parentId = parentTree[parentTree.length - 1];
+					String itemsetFormat = "\t\t\t<xf:itemset nodeset=\"instance(''{1}'')/item[@parent=instance(''{0}'')/{2}]\"><xf:label ref=\"label\"/><xf:value ref=\"value\"/></xf:itemset>\n";
+					String itemsetDef = MessageFormat.format(itemsetFormat,
+							tree[1], qId, parentId);
+					buf.append(itemsetDef);
+					buf.append("\t\t</xf:select1>");
 					buf.append('\n');
 				} else if (questionTypeGeneratesBoundInput(qType)) {
 					buf.append(MessageFormat.format(
