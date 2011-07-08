@@ -138,24 +138,39 @@ public class ModelToXML {
 
 			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
 
-				if (q.getType() == QuestionDef.QTN_TYPE_REPEAT) {
+				byte qType = q.getType();
+				String qPath = q.getVariableName();
+				String qName = q.getText();
+				String[] tree = q.getVariableName().split("/\\s*");
+				String qId = tree[tree.length - 1];
+
+				if (qType == QuestionDef.QTN_TYPE_REPEAT) {
 					buf.append(MessageFormat.format(
-							"\t\t<xf:group id=\"{0}\">", q.getVariableName()));
+							"\t\t<xf:group id=\"{0}\">", qPath));
 					buf.append('\n');
 					buf.append(MessageFormat.format(
-							"\t\t\t<xf:label>{0}</xf:label>", q.getText()));
+							"\t\t\t<xf:label>{0}</xf:label>", qName));
 					buf.append('\n');
 					buf.append("\t\t</xf:group>");
-				} else if (questionTypeGeneratesBoundInput(q.getType())) {
-					String[] tree = q.getVariableName().split("/\\s*");
-					String qid = tree[tree.length - 1];
+				} else if (questionTypeGeneratesBoundInput(qType)) {
 					buf.append(MessageFormat.format(
-							"\t\t<xf:input bind=\"{0}\">", qid));
+							"\t\t<xf:input bind=\"{0}\">", qId));
 					buf.append('\n');
 					buf.append(MessageFormat.format(
-							"\t\t\t<xf:label>{0}</xf:label>", q.getText()));
+							"\t\t\t<xf:label>{0}</xf:label>", qName));
 					buf.append('\n');
 					buf.append("\t\t</xf:input>");
+					buf.append('\n');
+				} else if (questionTypeGeneratesBoundUpload(qType)) {
+					String mediaType = questionTypeToMediaType(qType);
+					buf.append(MessageFormat.format(
+							"\t\t<xf:upload bind=\"{0}\" mediatype=\"{1}\">",
+							qId, mediaType));
+					buf.append('\n');
+					buf.append(MessageFormat.format(
+							"\t\t\t<xf:label>{0}</xf:label>", qName));
+					buf.append('\n');
+					buf.append("\t\t</xf:upload>");
 					buf.append('\n');
 				}
 			}
@@ -236,6 +251,19 @@ public class ModelToXML {
 		}
 	}
 
+	public static String questionTypeToMediaType(byte type) {
+		switch (type) {
+		case QuestionDef.QTN_TYPE_AUDIO:
+			return "audio/*";
+		case QuestionDef.QTN_TYPE_VIDEO:
+			return "video/*";
+		case QuestionDef.QTN_TYPE_IMAGE:
+			return "image/*";
+		default:
+			return null;
+		}
+	}
+
 	public static boolean questionTypeGeneratesBindFormat(byte type) {
 		return questionTypeToFormat(type) != null;
 	}
@@ -269,6 +297,17 @@ public class ModelToXML {
 			return false;
 		default:
 			return true;
+		}
+	}
+
+	public static boolean questionTypeGeneratesBoundUpload(byte type) {
+		switch (type) {
+		case QuestionDef.QTN_TYPE_AUDIO:
+		case QuestionDef.QTN_TYPE_VIDEO:
+		case QuestionDef.QTN_TYPE_IMAGE:
+			return true;
+		default:
+			return false;
 		}
 	}
 }

@@ -152,4 +152,22 @@ public class ModelToXMLTest extends TestCase {
 					matchCount.intValue());
 		}
 	}
+
+	public void testBoundUploadConversion() throws Exception {
+
+		String matchPattern = "count(//xf:upload[@bind=''{0}'' and @mediatype=''{1}''])";
+		String[][] matchParams = { { "picture", "image/*" },
+				{ "coughsound", "audio/*" }, { "recordvideo", "video/*" } };
+
+		for (String[] matchQuestion : matchParams) {
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern,
+					(Object[]) matchQuestion);
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " upload not present ", 1,
+					matchCount.intValue());
+		}
+	}
 }
