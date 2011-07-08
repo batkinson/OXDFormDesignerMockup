@@ -5,6 +5,7 @@ import java.util.Stack;
 import java.util.Vector;
 
 import org.fcitmuk.epihandy.FormDef;
+import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.QuestionDef;
 import org.slf4j.Logger;
@@ -152,6 +153,23 @@ public class ModelToXML {
 							"\t\t\t<xf:label>{0}</xf:label>", qName));
 					buf.append('\n');
 					buf.append("\t\t</xf:group>");
+				} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE) {
+					buf.append(MessageFormat.format(
+							"\t\t<xf:select1 bind=\"{0}\">", qId));
+					buf.append('\n');
+					buf.append(MessageFormat.format(
+							"\t\t\t<xf:label>{0}</xf:label>", qName));
+					buf.append('\n');
+					for (OptionDef opt : (Vector<OptionDef>) q.getOptions()) {
+						String optFormat = "<xf:item id=\"{0}\"><xf:label>{1}</xf:label><xf:value>{0}</xf:value></xf:item>";
+						String optDef = MessageFormat.format(optFormat,
+								opt.getVariableName(), opt.getText());
+						buf.append("\t\t\t");
+						buf.append(optDef);
+						buf.append('\n');
+					}
+					buf.append("\t\t</xf:select1>");
+					buf.append('\n');
 				} else if (questionTypeGeneratesBoundInput(qType)) {
 					buf.append(MessageFormat.format(
 							"\t\t<xf:input bind=\"{0}\">", qId));

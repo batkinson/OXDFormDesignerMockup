@@ -17,6 +17,7 @@ import junit.framework.TestCase;
 
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.PageDef;
+import org.fcitmuk.epihandy.QuestionDef;
 import org.fcitmuk.epihandy.xform.EpihandyXform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,6 +164,25 @@ public class ModelToXMLTest extends TestCase {
 			convertedStream.reset(); // Restore stream state
 			String expr = MessageFormat.format(matchPattern,
 					(Object[]) matchQuestion);
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " upload not present ", 1,
+					matchCount.intValue());
+		}
+	}
+
+	public void testExclusiveListConversion() throws Exception {
+
+		String matchPattern = "count(//xf:select1[@bind=''{0}'' and count(xf:item) = ''{1}''])";
+		String[] matchParams = { "title", "sex", "continent" };
+
+		for (String matchQuestion : matchParams) {
+			QuestionDef qDef = sampleDef.getQuestion("/patientreg/"
+					+ matchQuestion);
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern, matchQuestion,
+					Integer.toString(qDef.getOptions().size()));
 			XPathExpression compiledExpr = xpath.compile(expr);
 			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
 					XPathConstants.NUMBER);
