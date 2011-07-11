@@ -63,7 +63,7 @@ public class ModelToXMLTest extends TestCase {
 		sampleDef = EpihandyXform
 				.fromXform2FormDef(new StringReader(sampleXml));
 
-		Map<Short, QuestionDef> dynOptDepMap = new HashMap<Short, QuestionDef>();
+		dynOptDepMap = new HashMap<Short, QuestionDef>();
 		for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) sampleDef
 				.getDynamicOptions().entrySet()) {
 			dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
@@ -237,6 +237,32 @@ public class ModelToXMLTest extends TestCase {
 			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
 					XPathConstants.NUMBER);
 			assertEquals(expr + " select1 not present ", 1,
+					matchCount.intValue());
+		}
+	}
+
+	public void testDynamicListItemConversion() throws Exception {
+
+		String matchPattern = "count(//xf:instance[@id=''{0}'']/dynamiclist[count(item) = ''{1}''])";
+		String[] matchParams = { "country", "district", "village" };
+
+		for (String matchQuestion : matchParams) {
+			QuestionDef qDef = sampleDef.getQuestion("/patientreg/"
+					+ matchQuestion);
+			QuestionDef parentQuestionDef = dynOptDepMap.get(qDef.getId());
+			int optCount = 0;
+			DynamicOptionDef dynOptDef = sampleDef
+					.getDynamicOptions(parentQuestionDef.getId());
+			for (Short key : (Set<Short>) dynOptDef.getParentToChildOptions()
+					.keySet())
+				optCount += dynOptDef.getOptionList(key).size();
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern, matchQuestion,
+					optCount);
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " instance not present ", 1,
 					matchCount.intValue());
 		}
 	}

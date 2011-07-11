@@ -104,6 +104,42 @@ public class ModelToXML {
 		buf.append("\t\t</xf:instance>");
 		buf.append('\n');
 
+		// Generate instances for dynamic lists
+		for (PageDef p : (Vector<PageDef>) formDef.getPages())
+			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
+				byte qType = q.getType();
+				String qId = getIdFromVarName(q.getVariableName());
+				if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
+					String instanceDef = MessageFormat.format(
+							"\t\t<xf:instance id=''{0}''>\n", qId);
+					buf.append(instanceDef);
+					buf.append("\t\t\t<dynamiclist>\n");
+					QuestionDef parentQuestion = dynOptDepMap.get(q.getId());
+					QuestionDef parentParentQuestion = dynOptDepMap
+							.get(parentQuestion.getId());
+					Map<Short, OptionDef> possibleParentValues = getPossibleValues(
+							formDef, parentQuestion, parentParentQuestion);
+					DynamicOptionDef dynOptDef = formDef
+							.getDynamicOptions(parentQuestion.getId());
+					for (Map.Entry<Short, Vector<OptionDef>> dynOptEntry : (Set<Map.Entry<Short, Vector<OptionDef>>>) dynOptDef
+							.getParentToChildOptions().entrySet()) {
+						for (OptionDef option : dynOptEntry.getValue()) {
+							String itemPattern = "\t\t\t\t<item id=\"{0}\" parent=\"{1}\"><label>{2}</label><value>{0}</value></item>\n";
+							OptionDef parentOption = possibleParentValues
+									.get(dynOptEntry.getKey());
+							String itemDef = MessageFormat.format(itemPattern,
+									option.getVariableName(),
+									parentOption.getVariableName(),
+									option.getText());
+							buf.append(itemDef);
+						}
+					}
+
+					buf.append("\t\t\t</dynamiclist>\n");
+					buf.append("\t\t</xf:instance>\n");
+				}
+			}
+
 		for (PageDef p : (Vector<PageDef>) formDef.getPages())
 			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
 				String[] tree = q.getVariableName().split("/\\s*");
@@ -251,6 +287,37 @@ public class ModelToXML {
 			log.debug("converted form:\n" + buf.toString());
 
 		return buf.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static Map<Short, OptionDef> getPossibleValues(FormDef form,
+			QuestionDef question, QuestionDef parentQuestion) {
+		Map<Short, OptionDef> valuesById = new HashMap<Short, OptionDef>();
+		byte questionType = question.getType();
+		if (questionType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE
+				|| questionType == QuestionDef.QTN_TYPE_LIST_MULTIPLE) {
+			for (OptionDef option : (Vector<OptionDef>) question.getOptions())
+				valuesById.put(option.getId(), option);
+		} else if (questionType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
+			Map<Short, Vector<OptionDef>> optMap = (Map<Short, Vector<OptionDef>>) form
+					.getDynamicOptions(parentQuestion.getId())
+					.getParentToChildOptions();
+			for (Map.Entry<Short, Vector<OptionDef>> entry : optMap.entrySet())
+				for (OptionDef option : entry.getValue())
+					valuesById.put(option.getId(), option);
+		}
+		return valuesById;
+	}
+
+	public static String[] getPathFromVariableName(String varName) {
+		String trimmedString = varName.trim();
+		String[] path = trimmedString.split("/");
+		return path;
+	}
+
+	public static String getIdFromVarName(String varName) {
+		String[] path = getPathFromVariableName(varName);
+		return path[path.length - 1];
 	}
 
 	public static boolean questionTypeGeneratesBind(byte type) {
