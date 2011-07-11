@@ -91,6 +91,9 @@ public class ModelToXML {
 						for (int depth = 0; depth < stack.size(); depth++)
 							buf.append('\t');
 						buf.append("\t\t\t\t");
+					} else if (q.getDefaultValue() != null
+							&& !"".equals(q.getDefaultValue())) {
+						buf.append(q.getDefaultValue());
 					}
 					buf.append("</");
 					buf.append(item);

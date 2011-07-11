@@ -266,4 +266,22 @@ public class ModelToXMLTest extends TestCase {
 					matchCount.intValue());
 		}
 	}
+
+	public void testDefaultsConversion() throws Exception {
+
+		String matchPattern = "count(//xf:instance[@id=''{0}'']/{0}[{1} = \"{2}\"])";
+		String[][] matchParams = { { "patientreg", "nokids", "0" },
+				{ "patientreg", "starttime", "'today()'" } };
+
+		for (String[] matchParam : matchParams) {
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern,
+					(Object[]) matchParam);
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " default value not present ", 1,
+					matchCount.intValue());
+		}
+	}
 }
