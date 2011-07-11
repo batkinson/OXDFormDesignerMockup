@@ -1,17 +1,22 @@
 package org.openxdata.modelutils;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
 
+import org.fcitmuk.epihandy.Condition;
 import org.fcitmuk.epihandy.DynamicOptionDef;
+import org.fcitmuk.epihandy.EpihandyConstants;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.QuestionDef;
+import org.fcitmuk.epihandy.ValidationRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,6 +148,7 @@ public class ModelToXML {
 				}
 			}
 
+		// Generate bindings
 		for (PageDef p : (Vector<PageDef>) formDef.getPages())
 			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
 				String[] tree = q.getVariableName().split("/\\s*");
@@ -155,23 +161,43 @@ public class ModelToXML {
 							.getType());
 					boolean generateFormat = questionTypeGeneratesBindFormat(q
 							.getType());
+					boolean generateValidation = questionGeneratesValidationRule(
+							formDef, q);
 					String qid = tree[tree.length - 1];
 					if (generateBind) {
 						buf.append("\t\t");
+						StringBuilder bindBuf = new StringBuilder(
+								"<xf:bind id=\"{0}\" nodeset=\"{1}\" type=\"{2}\"");
+						List<Object> bindArgs = new ArrayList<Object>();
+
+						bindArgs.add(qid);
+						bindArgs.add(q.getVariableName());
+						bindArgs.add(questionTypeToSchemaType(q.getType()));
+
 						if (generateFormat) {
-							buf.append(MessageFormat
-									.format("<xf:bind id=\"{0}\" nodeset=\"{1}\" type=\"{2}\" format=\"{3}\" />",
-											qid, q.getVariableName(),
-											questionTypeToSchemaType(q
-													.getType()),
-											questionTypeToFormat(q.getType())));
-						} else {
-							buf.append(MessageFormat
-									.format("<xf:bind id=\"{0}\" nodeset=\"{1}\" type=\"{2}\"/>",
-											qid, q.getVariableName(),
-											questionTypeToSchemaType(q
-													.getType())));
+							bindBuf.append(" format=\"{");
+							bindBuf.append(bindArgs.size());
+							bindBuf.append("}\"");
+							bindArgs.add(questionTypeToFormat(q.getType()));
 						}
+
+						if (generateValidation) {
+							bindBuf.append(" constraint=\"{");
+							bindBuf.append(bindArgs.size());
+							bindBuf.append("}\" message=\"{");
+							bindBuf.append(bindArgs.size() + 1);
+							bindBuf.append("}\"");
+							ValidationRule vRule = formDef.getValidationRule(q
+									.getId());
+							String constraint = buildConstraintFromRule(
+									formDef, vRule);
+							bindArgs.add(constraint);
+							bindArgs.add(vRule.getErrorMessage());
+						}
+
+						bindBuf.append("/>");
+						buf.append(MessageFormat.format(bindBuf.toString(),
+								bindArgs.toArray()));
 						buf.append('\n');
 					}
 				}
@@ -290,6 +316,55 @@ public class ModelToXML {
 			log.debug("converted form:\n" + buf.toString());
 
 		return buf.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static String buildConstraintFromRule(FormDef form,
+			ValidationRule rule) {
+
+		StringBuilder buf = new StringBuilder();
+		String op = rule.getConditionsOperator() == EpihandyConstants.CONDITIONS_OPERATOR_AND ? "and"
+				: "or";
+
+		Vector<Condition> conditions = (Vector<Condition>) rule.getConditions();
+		for (int i = 0; i < conditions.size(); i++) {
+
+			Condition c = rule.getConditionAt(i);
+
+			String qPath = null;
+			if (rule.getQuestionId() == c.getQuestionId())
+				qPath = ".";
+			else
+				qPath = form.getQuestion(c.getQuestionId()).getVariableName();
+
+			buf.append(qPath);
+			buf.append(' ');
+			buf.append(opTypeToString(c.getOperator()));
+			buf.append(' ');
+			buf.append(c.getValue());
+
+			if (i < conditions.size() - 1 && conditions.size() > 1) {
+				buf.append(' ');
+				buf.append(op);
+				buf.append(' ');
+			}
+		}
+		return buf.toString();
+	}
+
+	private static Map<Byte, String> opMap = new HashMap<Byte, String>();
+
+	static {
+		opMap.put(EpihandyConstants.OPERATOR_EQUAL, "=");
+		opMap.put(EpihandyConstants.OPERATOR_NOT_EQUAL, "!=");
+		opMap.put(EpihandyConstants.OPERATOR_LESS, "&lt;");
+		opMap.put(EpihandyConstants.OPERATOR_LESS_EQUAL, "&lt;=");
+		opMap.put(EpihandyConstants.OPERATOR_GREATER, "&gt;");
+		opMap.put(EpihandyConstants.OPERATOR_GREATER_EQUAL, "&gt;=");
+	}
+
+	public static String opTypeToString(byte opType) {
+		return opMap.get(opType);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -443,5 +518,10 @@ public class ModelToXML {
 		default:
 			return false;
 		}
+	}
+
+	public static boolean questionGeneratesValidationRule(FormDef form,
+			QuestionDef question) {
+		return form.getValidationRule(question.getId()) != null;
 	}
 }

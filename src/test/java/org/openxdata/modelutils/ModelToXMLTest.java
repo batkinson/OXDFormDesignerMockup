@@ -284,4 +284,26 @@ public class ModelToXMLTest extends TestCase {
 					matchCount.intValue());
 		}
 	}
+
+	public void testValidationConverstion() throws Exception {
+		String matchPattern = "count(//xf:bind[@id=''{0}'' and @constraint=''{1}'' and @message=''{2}''])";
+		String[][] matchParams = {
+				{ "birthdate", ". <= today()", "Cannot be greater than today" },
+				{ "weight", ". >= 1.1 and . <= 99.9",
+						"Should be between 0 and 200 inclusive" },
+				{ "height", ". >= 1 and . >= 20",
+						"Should be between 1 and 20 inclusive" },
+				{ "nokids", ". >= 0 and . < 100", "Should be between 0 and 100" } };
+
+		for (String[] matchParam : matchParams) {
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern,
+					(Object[]) matchParam);
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " validation rule not present ", 1,
+					matchCount.intValue());
+		}
+	}
 }
