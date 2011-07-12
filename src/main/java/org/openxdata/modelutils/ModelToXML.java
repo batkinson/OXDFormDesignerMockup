@@ -3,6 +3,7 @@ package org.openxdata.modelutils;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,6 +17,7 @@ import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.QuestionDef;
+import org.fcitmuk.epihandy.SkipRule;
 import org.fcitmuk.epihandy.ValidationRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +47,21 @@ public class ModelToXML {
 		if (formDef == null)
 			throw new IllegalArgumentException("form def can not be null");
 
+		// Build a reverse map of targets to skip rules that affect them
+		Map<Short, Set<SkipRule>> skipRulesByTarget = new HashMap<Short, Set<SkipRule>>();
+		for (SkipRule skipRule : (Vector<SkipRule>) formDef.getSkipRules()) {
+			for (Short targetQuestionId : (Vector<Short>) skipRule
+					.getActionTargets()) {
+				Set<SkipRule> ruleSet = skipRulesByTarget.get(targetQuestionId);
+				if (ruleSet == null) {
+					ruleSet = new LinkedHashSet<SkipRule>();
+					skipRulesByTarget.put(targetQuestionId, ruleSet);
+				}
+				ruleSet.add(skipRule);
+			}
+		}
+
+		// Build a map of dynamic lists to the dynopts that affect them
 		Map<Short, QuestionDef> dynOptDepMap = new HashMap<Short, QuestionDef>();
 		for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) formDef
 				.getDynamicOptions().entrySet()) {
@@ -52,6 +69,7 @@ public class ModelToXML {
 					formDef.getQuestion(dynOptEntry.getKey()));
 		}
 
+		// Output xform header and beginning of model declaration
 		buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>");
 		buf.append('\n');
 		buf.append("<xf:xforms xmlns:xf=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">");
@@ -163,6 +181,8 @@ public class ModelToXML {
 							.getType());
 					boolean generateValidation = questionGeneratesValidationRule(
 							formDef, q);
+					boolean generateRelevant = skipRulesByTarget.containsKey(q
+							.getId());
 					String qid = tree[tree.length - 1];
 					if (generateBind) {
 						buf.append("\t\t");
@@ -195,6 +215,24 @@ public class ModelToXML {
 							bindArgs.add(vRule.getErrorMessage());
 						}
 
+						if (generateRelevant) {
+							bindBuf.append(" relevant=\"{");
+							bindBuf.append(bindArgs.size());
+							bindBuf.append("}\" action=\"{");
+							bindBuf.append(bindArgs.size() + 1);
+							bindBuf.append("}\"");
+							Set<SkipRule> skipRules = skipRulesByTarget.get(q
+									.getId());
+							String constraint = buildSkipRuleLogic(formDef,
+									skipRules, q);
+							Object lastRule = skipRules.toArray()[skipRules
+									.size() - 1];
+							String action = buildAction(((SkipRule) lastRule)
+									.getAction());
+							bindArgs.add(constraint);
+							bindArgs.add(action);
+						}
+
 						bindBuf.append("/>");
 						buf.append(MessageFormat.format(bindBuf.toString(),
 								bindArgs.toArray()));
@@ -206,6 +244,7 @@ public class ModelToXML {
 		buf.append("\t</xf:model>");
 		buf.append('\n');
 
+		// Generate controls
 		for (PageDef p : (Vector<PageDef>) formDef.getPages()) {
 			buf.append(MessageFormat.format("\t<xf:group id=\"{0}\">",
 					p.getPageNo()));
@@ -318,6 +357,63 @@ public class ModelToXML {
 		return buf.toString();
 	}
 
+	public static String buildAction(byte action) {
+		StringBuilder buf = new StringBuilder();
+
+		if ((action & EpihandyConstants.ACTION_HIDE) != 0)
+			buf.append("hide");
+		else if ((action & EpihandyConstants.ACTION_SHOW) != 0)
+			buf.append("show");
+		else if ((action & EpihandyConstants.ACTION_DISABLE) != 0)
+			buf.append("disable");
+		else if ((action & EpihandyConstants.ACTION_ENABLE) != 0)
+			buf.append("enable");
+
+		if ((action & EpihandyConstants.ACTION_MAKE_MANDATORY) != 0)
+			buf.append("|true()");
+
+		return buf.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static String buildSkipRuleLogic(FormDef form,
+			Set<SkipRule> skipRules, QuestionDef target) {
+
+		StringBuilder buf = new StringBuilder();
+		for (SkipRule rule : skipRules) {
+			String op = rule.getConditionsOperator() == EpihandyConstants.CONDITIONS_OPERATOR_AND ? "and"
+					: "or";
+
+			Vector<Condition> conditions = (Vector<Condition>) rule
+					.getConditions();
+			for (int i = 0; i < conditions.size(); i++) {
+
+				Condition c = conditions.get(i);
+
+				String qPath = null;
+				if (target.getId() == c.getQuestionId())
+					qPath = ".";
+				else
+					qPath = form.getQuestion(c.getQuestionId())
+							.getVariableName();
+
+				buf.append(qPath);
+				buf.append(' ');
+				buf.append(opTypeToString(c.getOperator()));
+				buf.append(" '");
+				buf.append(c.getValue());
+				buf.append('\'');
+
+				if (i < conditions.size() - 1 && conditions.size() > 1) {
+					buf.append(' ');
+					buf.append(op);
+					buf.append(' ');
+				}
+			}
+		}
+		return buf.toString();
+	}
+
 	@SuppressWarnings("unchecked")
 	public static String buildConstraintFromRule(FormDef form,
 			ValidationRule rule) {
@@ -329,7 +425,7 @@ public class ModelToXML {
 		Vector<Condition> conditions = (Vector<Condition>) rule.getConditions();
 		for (int i = 0; i < conditions.size(); i++) {
 
-			Condition c = rule.getConditionAt(i);
+			Condition c = conditions.get(i);
 
 			String qPath = null;
 			if (rule.getQuestionId() == c.getQuestionId())

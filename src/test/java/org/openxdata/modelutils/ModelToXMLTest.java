@@ -306,4 +306,20 @@ public class ModelToXMLTest extends TestCase {
 					matchCount.intValue());
 		}
 	}
+
+	public void testSkipLogicConversion() throws Exception {
+		String matchPattern = "count(//xf:bind[@id=''{0}'' and @relevant=\"/patientreg/sex = ''female''\" and @action=''enable''])";
+		String[][] matchParams = { { "pregnant" } };
+
+		for (String[] matchParam : matchParams) {
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern,
+					(Object[]) matchParam);
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " skip rule not present ", 1,
+					matchCount.intValue());
+		}
+	}
 }
