@@ -41,13 +41,54 @@ public class ModelToXML {
 	private static final String GPS_BINDFORMAT = "gps";
 	private static final String PHONENUMBER_BINDFORMAT = "phonenumber";
 
-	@SuppressWarnings("unchecked")
 	public static String convert(FormDef formDef) {
 		StringBuilder buf = new StringBuilder();
 		if (formDef == null)
 			throw new IllegalArgumentException("form def can not be null");
 
 		// Build a reverse map of targets to skip rules that affect them
+		Map<Short, Set<SkipRule>> skipRulesByTarget = getSkipRulesByTargetId(formDef);
+
+		// Build a map of dynamic lists to the dynopts that affect them
+		Map<Short, QuestionDef> dynOptDepMap = getDynOptDepMap(formDef);
+
+		// Output xform header and beginning of model declaration
+		buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>");
+		buf.append('\n');
+		buf.append("<xf:xforms xmlns:xf=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">");
+		buf.append('\n');
+		buf.append("\t<xf:model>");
+		buf.append('\n');
+		generateMainInstance(formDef, buf);
+		buf.append('\n');
+		generateDynListInstances(formDef, buf, dynOptDepMap);
+		generateBindings(formDef, buf, skipRulesByTarget);
+		buf.append("\t</xf:model>");
+		buf.append('\n');
+		generateControls(formDef, buf, dynOptDepMap);
+		buf.append("</xf:xforms>");
+		buf.append('\n');
+
+		if (log.isDebugEnabled())
+			log.debug("converted form:\n" + buf.toString());
+
+		return buf.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<Short, QuestionDef> getDynOptDepMap(FormDef formDef) {
+		Map<Short, QuestionDef> dynOptDepMap = new HashMap<Short, QuestionDef>();
+		for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) formDef
+				.getDynamicOptions().entrySet()) {
+			dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
+					formDef.getQuestion(dynOptEntry.getKey()));
+		}
+		return dynOptDepMap;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<Short, Set<SkipRule>> getSkipRulesByTargetId(
+			FormDef formDef) {
 		Map<Short, Set<SkipRule>> skipRulesByTarget = new HashMap<Short, Set<SkipRule>>();
 		for (SkipRule skipRule : (Vector<SkipRule>) formDef.getSkipRules()) {
 			for (Short targetQuestionId : (Vector<Short>) skipRule
@@ -60,191 +101,12 @@ public class ModelToXML {
 				ruleSet.add(skipRule);
 			}
 		}
+		return skipRulesByTarget;
+	}
 
-		// Build a map of dynamic lists to the dynopts that affect them
-		Map<Short, QuestionDef> dynOptDepMap = new HashMap<Short, QuestionDef>();
-		for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) formDef
-				.getDynamicOptions().entrySet()) {
-			dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
-					formDef.getQuestion(dynOptEntry.getKey()));
-		}
-
-		// Output xform header and beginning of model declaration
-		buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>");
-		buf.append('\n');
-		buf.append("<xf:xforms xmlns:xf=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">");
-		buf.append('\n');
-		buf.append("\t<xf:model>");
-		buf.append('\n');
-		buf.append(MessageFormat.format("\t\t<xf:instance id=\"{0}\">",
-				formDef.getVariableName()));
-		buf.append('\n');
-
-		// Generate the main instance
-		buf.append(MessageFormat
-				.format("\t\t\t<{0} description-template=\"{1}\" id=\"{2}\" name=\"{3}\">",
-						formDef.getVariableName(),
-						formDef.getDescriptionTemplate(), formDef.getId(),
-						formDef.getName()));
-		buf.append('\n');
-		for (PageDef p : (Vector<PageDef>) formDef.getPages())
-			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
-				String[] tree = q.getVariableName().split("/\\s*");
-				Stack<String> stack = new Stack<String>();
-				for (int i = 0; i < tree.length; i++) {
-					if ("".equals(tree[i])
-							|| formDef.getVariableName().equals(tree[i]))
-						continue;
-
-					if (tree.length > 3 && stack.size() > 0)
-						buf.append('\n');
-
-					for (int depth = 0; depth < stack.size(); depth++)
-						buf.append('\t');
-
-					buf.append("\t\t\t\t");
-					buf.append('<');
-					buf.append(tree[i]);
-					buf.append('>');
-					stack.push(tree[i]);
-				}
-				while (!stack.isEmpty()) {
-					String item = stack.pop();
-					if (tree.length > 3) {
-						for (int depth = 0; depth < stack.size(); depth++)
-							buf.append('\t');
-						buf.append("\t\t\t\t");
-					} else if (q.getDefaultValue() != null
-							&& !"".equals(q.getDefaultValue())) {
-						buf.append(q.getDefaultValue());
-					}
-					buf.append("</");
-					buf.append(item);
-					buf.append('>');
-					buf.append('\n');
-				}
-			}
-		buf.append(MessageFormat.format("\t\t\t</{0}>",
-				formDef.getVariableName()));
-		buf.append('\n');
-		buf.append("\t\t</xf:instance>");
-		buf.append('\n');
-
-		// Generate instances for dynamic lists
-		for (PageDef p : (Vector<PageDef>) formDef.getPages())
-			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
-				byte qType = q.getType();
-				String qId = getIdFromVarName(q.getVariableName());
-				if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
-					String instanceDef = MessageFormat.format(
-							"\t\t<xf:instance id=''{0}''>\n", qId);
-					buf.append(instanceDef);
-					buf.append("\t\t\t<dynamiclist>\n");
-					QuestionDef parentQuestion = dynOptDepMap.get(q.getId());
-					QuestionDef parentParentQuestion = dynOptDepMap
-							.get(parentQuestion.getId());
-					Map<Short, OptionDef> possibleParentValues = getPossibleValues(
-							formDef, parentQuestion, parentParentQuestion);
-					DynamicOptionDef dynOptDef = formDef
-							.getDynamicOptions(parentQuestion.getId());
-					for (Map.Entry<Short, Vector<OptionDef>> dynOptEntry : (Set<Map.Entry<Short, Vector<OptionDef>>>) dynOptDef
-							.getParentToChildOptions().entrySet()) {
-						for (OptionDef option : dynOptEntry.getValue()) {
-							String itemPattern = "\t\t\t\t<item id=\"{0}\" parent=\"{1}\"><label>{2}</label><value>{0}</value></item>\n";
-							OptionDef parentOption = possibleParentValues
-									.get(dynOptEntry.getKey());
-							String itemDef = MessageFormat.format(itemPattern,
-									option.getVariableName(),
-									parentOption.getVariableName(),
-									option.getText());
-							buf.append(itemDef);
-						}
-					}
-
-					buf.append("\t\t\t</dynamiclist>\n");
-					buf.append("\t\t</xf:instance>\n");
-				}
-			}
-
-		// Generate bindings
-		for (PageDef p : (Vector<PageDef>) formDef.getPages())
-			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
-				String[] tree = q.getVariableName().split("/\\s*");
-				for (int i = 0; i < tree.length; i++) {
-					if ("".equals(tree[i])
-							|| formDef.getVariableName().equals(tree[i]))
-						continue;
-
-					boolean generateBind = questionTypeGeneratesBind(q
-							.getType());
-					boolean generateFormat = questionTypeGeneratesBindFormat(q
-							.getType());
-					boolean generateValidation = questionGeneratesValidationRule(
-							formDef, q);
-					boolean generateRelevant = skipRulesByTarget.containsKey(q
-							.getId());
-					String qid = tree[tree.length - 1];
-					if (generateBind) {
-						buf.append("\t\t");
-						StringBuilder bindBuf = new StringBuilder(
-								"<xf:bind id=\"{0}\" nodeset=\"{1}\" type=\"{2}\"");
-						List<Object> bindArgs = new ArrayList<Object>();
-
-						bindArgs.add(qid);
-						bindArgs.add(q.getVariableName());
-						bindArgs.add(questionTypeToSchemaType(q.getType()));
-
-						if (generateFormat) {
-							bindBuf.append(" format=\"{");
-							bindBuf.append(bindArgs.size());
-							bindBuf.append("}\"");
-							bindArgs.add(questionTypeToFormat(q.getType()));
-						}
-
-						if (generateValidation) {
-							bindBuf.append(" constraint=\"{");
-							bindBuf.append(bindArgs.size());
-							bindBuf.append("}\" message=\"{");
-							bindBuf.append(bindArgs.size() + 1);
-							bindBuf.append("}\"");
-							ValidationRule vRule = formDef.getValidationRule(q
-									.getId());
-							String constraint = buildConstraintFromRule(
-									formDef, vRule);
-							bindArgs.add(constraint);
-							bindArgs.add(vRule.getErrorMessage());
-						}
-
-						if (generateRelevant) {
-							bindBuf.append(" relevant=\"{");
-							bindBuf.append(bindArgs.size());
-							bindBuf.append("}\" action=\"{");
-							bindBuf.append(bindArgs.size() + 1);
-							bindBuf.append("}\"");
-							Set<SkipRule> skipRules = skipRulesByTarget.get(q
-									.getId());
-							String constraint = buildSkipRuleLogic(formDef,
-									skipRules, q);
-							Object lastRule = skipRules.toArray()[skipRules
-									.size() - 1];
-							String action = buildAction(((SkipRule) lastRule)
-									.getAction());
-							bindArgs.add(constraint);
-							bindArgs.add(action);
-						}
-
-						bindBuf.append("/>");
-						buf.append(MessageFormat.format(bindBuf.toString(),
-								bindArgs.toArray()));
-						buf.append('\n');
-					}
-				}
-			}
-
-		buf.append("\t</xf:model>");
-		buf.append('\n');
-
-		// Generate controls
+	@SuppressWarnings("unchecked")
+	private static void generateControls(FormDef formDef, StringBuilder buf,
+			Map<Short, QuestionDef> dynOptDepMap) {
 		for (PageDef p : (Vector<PageDef>) formDef.getPages()) {
 			buf.append(MessageFormat.format("\t<xf:group id=\"{0}\">",
 					p.getPageNo()));
@@ -347,14 +209,179 @@ public class ModelToXML {
 			buf.append("\t</xf:group>");
 			buf.append('\n');
 		}
+	}
 
-		buf.append("</xf:xforms>");
+	@SuppressWarnings("unchecked")
+	private static void generateBindings(FormDef formDef, StringBuilder buf,
+			Map<Short, Set<SkipRule>> skipRulesByTarget) {
+		for (PageDef p : (Vector<PageDef>) formDef.getPages())
+			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
+				String[] tree = q.getVariableName().split("/\\s*");
+				for (int i = 0; i < tree.length; i++) {
+					if ("".equals(tree[i])
+							|| formDef.getVariableName().equals(tree[i]))
+						continue;
+
+					boolean generateBind = questionTypeGeneratesBind(q
+							.getType());
+					boolean generateFormat = questionTypeGeneratesBindFormat(q
+							.getType());
+					boolean generateValidation = questionGeneratesValidationRule(
+							formDef, q);
+					boolean generateRelevant = skipRulesByTarget.containsKey(q
+							.getId());
+					String qid = tree[tree.length - 1];
+					if (generateBind) {
+						buf.append("\t\t");
+						StringBuilder bindBuf = new StringBuilder(
+								"<xf:bind id=\"{0}\" nodeset=\"{1}\" type=\"{2}\"");
+						List<Object> bindArgs = new ArrayList<Object>();
+
+						bindArgs.add(qid);
+						bindArgs.add(q.getVariableName());
+						bindArgs.add(questionTypeToSchemaType(q.getType()));
+
+						if (generateFormat) {
+							bindBuf.append(" format=\"{");
+							bindBuf.append(bindArgs.size());
+							bindBuf.append("}\"");
+							bindArgs.add(questionTypeToFormat(q.getType()));
+						}
+
+						if (generateValidation) {
+							bindBuf.append(" constraint=\"{");
+							bindBuf.append(bindArgs.size());
+							bindBuf.append("}\" message=\"{");
+							bindBuf.append(bindArgs.size() + 1);
+							bindBuf.append("}\"");
+							ValidationRule vRule = formDef.getValidationRule(q
+									.getId());
+							String constraint = buildConstraintFromRule(
+									formDef, vRule);
+							bindArgs.add(constraint);
+							bindArgs.add(vRule.getErrorMessage());
+						}
+
+						if (generateRelevant) {
+							bindBuf.append(" relevant=\"{");
+							bindBuf.append(bindArgs.size());
+							bindBuf.append("}\" action=\"{");
+							bindBuf.append(bindArgs.size() + 1);
+							bindBuf.append("}\"");
+							Set<SkipRule> skipRules = skipRulesByTarget.get(q
+									.getId());
+							String constraint = buildSkipRuleLogic(formDef,
+									skipRules, q);
+							Object lastRule = skipRules.toArray()[skipRules
+									.size() - 1];
+							String action = buildAction(((SkipRule) lastRule)
+									.getAction());
+							bindArgs.add(constraint);
+							bindArgs.add(action);
+						}
+
+						bindBuf.append("/>");
+						buf.append(MessageFormat.format(bindBuf.toString(),
+								bindArgs.toArray()));
+						buf.append('\n');
+					}
+				}
+			}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void generateDynListInstances(FormDef formDef,
+			StringBuilder buf, Map<Short, QuestionDef> dynOptDepMap) {
+		for (PageDef p : (Vector<PageDef>) formDef.getPages())
+			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
+				byte qType = q.getType();
+				String qId = getIdFromVarName(q.getVariableName());
+				if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
+					String instanceDef = MessageFormat.format(
+							"\t\t<xf:instance id=''{0}''>\n", qId);
+					buf.append(instanceDef);
+					buf.append("\t\t\t<dynamiclist>\n");
+					QuestionDef parentQuestion = dynOptDepMap.get(q.getId());
+					QuestionDef parentParentQuestion = dynOptDepMap
+							.get(parentQuestion.getId());
+					Map<Short, OptionDef> possibleParentValues = getPossibleValues(
+							formDef, parentQuestion, parentParentQuestion);
+					DynamicOptionDef dynOptDef = formDef
+							.getDynamicOptions(parentQuestion.getId());
+					for (Map.Entry<Short, Vector<OptionDef>> dynOptEntry : (Set<Map.Entry<Short, Vector<OptionDef>>>) dynOptDef
+							.getParentToChildOptions().entrySet()) {
+						for (OptionDef option : dynOptEntry.getValue()) {
+							String itemPattern = "\t\t\t\t<item id=\"{0}\" parent=\"{1}\"><label>{2}</label><value>{0}</value></item>\n";
+							OptionDef parentOption = possibleParentValues
+									.get(dynOptEntry.getKey());
+							String itemDef = MessageFormat.format(itemPattern,
+									option.getVariableName(),
+									parentOption.getVariableName(),
+									option.getText());
+							buf.append(itemDef);
+						}
+					}
+
+					buf.append("\t\t\t</dynamiclist>\n");
+					buf.append("\t\t</xf:instance>\n");
+				}
+			}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void generateMainInstance(FormDef formDef, StringBuilder buf) {
+		buf.append(MessageFormat.format("\t\t<xf:instance id=\"{0}\">",
+				formDef.getVariableName()));
 		buf.append('\n');
 
-		if (log.isDebugEnabled())
-			log.debug("converted form:\n" + buf.toString());
+		// Generate the main instance
+		buf.append(MessageFormat
+				.format("\t\t\t<{0} description-template=\"{1}\" id=\"{2}\" name=\"{3}\">",
+						formDef.getVariableName(),
+						formDef.getDescriptionTemplate(), formDef.getId(),
+						formDef.getName()));
+		buf.append('\n');
+		for (PageDef p : (Vector<PageDef>) formDef.getPages())
+			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
+				String[] tree = q.getVariableName().split("/\\s*");
+				Stack<String> stack = new Stack<String>();
+				for (int i = 0; i < tree.length; i++) {
+					if ("".equals(tree[i])
+							|| formDef.getVariableName().equals(tree[i]))
+						continue;
 
-		return buf.toString();
+					if (tree.length > 3 && stack.size() > 0)
+						buf.append('\n');
+
+					for (int depth = 0; depth < stack.size(); depth++)
+						buf.append('\t');
+
+					buf.append("\t\t\t\t");
+					buf.append('<');
+					buf.append(tree[i]);
+					buf.append('>');
+					stack.push(tree[i]);
+				}
+				while (!stack.isEmpty()) {
+					String item = stack.pop();
+					if (tree.length > 3) {
+						for (int depth = 0; depth < stack.size(); depth++)
+							buf.append('\t');
+						buf.append("\t\t\t\t");
+					} else if (q.getDefaultValue() != null
+							&& !"".equals(q.getDefaultValue())) {
+						buf.append(q.getDefaultValue());
+					}
+					buf.append("</");
+					buf.append(item);
+					buf.append('>');
+					buf.append('\n');
+				}
+			}
+		buf.append(MessageFormat.format("\t\t\t</{0}>",
+				formDef.getVariableName()));
+		buf.append('\n');
+		buf.append("\t\t</xf:instance>");
 	}
 
 	public static String buildAction(byte action) {
