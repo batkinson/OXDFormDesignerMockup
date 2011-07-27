@@ -117,6 +117,7 @@ public class ModelToXMLTest extends TestCase {
 	public void testBindingConversion() throws Exception {
 		String[] exprs = {
 				"count(//xf:bind[@id='patientid' and @nodeset='/patientreg/patientid' and @type='xsd:string'])",
+				"count(//xf:bind[@id='lastname' and @nodeset='/patientreg/lastname' and @required='true()' and @type='xsd:string'])",
 				"count(//xf:bind[@id='picture' and @nodeset='/patientreg/picture' and @type='xsd:base64Binary' and @format='image'])",
 				"count(//xf:bind[@id='coughsound' and @nodeset='/patientreg/coughsound' and @format='audio' and @type='xsd:base64Binary'])",
 				"count(//xf:bind[@id='recordvideo' and @nodeset='/patientreg/recordvideo' and @format='video' and @type='xsd:base64Binary'])",

@@ -260,7 +260,9 @@ public class ModelToXML {
 						formDef, q);
 				boolean generateRelevant = skipRulesByTarget.containsKey(q
 						.getId());
+				boolean generateRequired = q.isMandatory();
 				String qid = tree[tree.length - 1];
+
 				if (generateBind) {
 					buf.append("\t\t");
 					StringBuilder bindBuf = new StringBuilder(
@@ -313,6 +315,13 @@ public class ModelToXML {
 								.getAction());
 						bindArgs.add(constraint);
 						bindArgs.add(action);
+					}
+
+					if (generateRequired) {
+						bindBuf.append(" required=\"{");
+						bindBuf.append(bindArgs.size());
+						bindBuf.append("}()\"");
+						bindArgs.add(q.isMandatory());
 					}
 
 					bindBuf.append("/>");
