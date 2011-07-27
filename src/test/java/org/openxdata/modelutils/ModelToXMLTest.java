@@ -356,4 +356,18 @@ public class ModelToXMLTest extends TestCase {
 					matchCount.intValue());
 		}
 	}
+
+	public void testRepeatBindConversion() throws Exception {
+		String[] matchPatterns = { "count(//xf:bind[@id='kid' and @nodeset='/patientreg/kids/kid'])" };
+
+		for (String matchPattern : matchPatterns) {
+			convertedStream.reset(); // Restore stream state
+			String expr = matchPattern;
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " repeat bind not present ", 1,
+					matchCount.intValue());
+		}
+	}
 }

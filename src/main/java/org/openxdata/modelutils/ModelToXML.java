@@ -228,74 +228,74 @@ public class ModelToXML {
 		for (PageDef p : (Vector<PageDef>) formDef.getPages())
 			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
 				String[] tree = q.getVariableName().split("/\\s*");
-				for (int i = 0; i < tree.length; i++) {
-					if ("".equals(tree[i])
-							|| formDef.getVariableName().equals(tree[i]))
-						continue;
 
-					boolean generateBind = questionTypeGeneratesBind(q
-							.getType());
-					boolean generateFormat = questionTypeGeneratesBindFormat(q
-							.getType());
-					boolean generateValidation = questionGeneratesValidationRule(
-							formDef, q);
-					boolean generateRelevant = skipRulesByTarget.containsKey(q
-							.getId());
-					String qid = tree[tree.length - 1];
-					if (generateBind) {
-						buf.append("\t\t");
-						StringBuilder bindBuf = new StringBuilder(
-								"<xf:bind id=\"{0}\" nodeset=\"{1}\" type=\"{2}\"");
-						List<Object> bindArgs = new ArrayList<Object>();
+				boolean generateBind = questionTypeGeneratesBind(q.getType());
+				boolean generateType = q.getType() != QuestionDef.QTN_TYPE_REPEAT;
+				boolean generateFormat = questionTypeGeneratesBindFormat(q
+						.getType());
+				boolean generateValidation = questionGeneratesValidationRule(
+						formDef, q);
+				boolean generateRelevant = skipRulesByTarget.containsKey(q
+						.getId());
+				String qid = tree[tree.length - 1];
+				if (generateBind) {
+					buf.append("\t\t");
+					StringBuilder bindBuf = new StringBuilder(
+							"<xf:bind id=\"{0}\" nodeset=\"{1}\"");
+					List<Object> bindArgs = new ArrayList<Object>();
 
-						bindArgs.add(qid);
-						bindArgs.add(q.getVariableName());
+					bindArgs.add(qid);
+					bindArgs.add(q.getVariableName());
+
+					if (generateType) {
+						bindBuf.append(" type=\"{");
+						bindBuf.append(bindArgs.size());
+						bindBuf.append("}\"");
 						bindArgs.add(questionTypeToSchemaType(q.getType()));
-
-						if (generateFormat) {
-							bindBuf.append(" format=\"{");
-							bindBuf.append(bindArgs.size());
-							bindBuf.append("}\"");
-							bindArgs.add(questionTypeToFormat(q.getType()));
-						}
-
-						if (generateValidation) {
-							bindBuf.append(" constraint=\"{");
-							bindBuf.append(bindArgs.size());
-							bindBuf.append("}\" message=\"{");
-							bindBuf.append(bindArgs.size() + 1);
-							bindBuf.append("}\"");
-							ValidationRule vRule = formDef.getValidationRule(q
-									.getId());
-							String constraint = buildConstraintFromRule(
-									formDef, vRule);
-							bindArgs.add(constraint);
-							bindArgs.add(vRule.getErrorMessage());
-						}
-
-						if (generateRelevant) {
-							bindBuf.append(" relevant=\"{");
-							bindBuf.append(bindArgs.size());
-							bindBuf.append("}\" action=\"{");
-							bindBuf.append(bindArgs.size() + 1);
-							bindBuf.append("}\"");
-							Set<SkipRule> skipRules = skipRulesByTarget.get(q
-									.getId());
-							String constraint = buildSkipRuleLogic(formDef,
-									skipRules, q);
-							Object lastRule = skipRules.toArray()[skipRules
-									.size() - 1];
-							String action = buildAction(((SkipRule) lastRule)
-									.getAction());
-							bindArgs.add(constraint);
-							bindArgs.add(action);
-						}
-
-						bindBuf.append("/>");
-						buf.append(MessageFormat.format(bindBuf.toString(),
-								bindArgs.toArray()));
-						buf.append('\n');
 					}
+
+					if (generateFormat) {
+						bindBuf.append(" format=\"{");
+						bindBuf.append(bindArgs.size());
+						bindBuf.append("}\"");
+						bindArgs.add(questionTypeToFormat(q.getType()));
+					}
+
+					if (generateValidation) {
+						bindBuf.append(" constraint=\"{");
+						bindBuf.append(bindArgs.size());
+						bindBuf.append("}\" message=\"{");
+						bindBuf.append(bindArgs.size() + 1);
+						bindBuf.append("}\"");
+						ValidationRule vRule = formDef.getValidationRule(q
+								.getId());
+						String constraint = buildConstraintFromRule(formDef,
+								vRule);
+						bindArgs.add(constraint);
+						bindArgs.add(vRule.getErrorMessage());
+					}
+
+					if (generateRelevant) {
+						bindBuf.append(" relevant=\"{");
+						bindBuf.append(bindArgs.size());
+						bindBuf.append("}\" action=\"{");
+						bindBuf.append(bindArgs.size() + 1);
+						bindBuf.append("}\"");
+						Set<SkipRule> skipRules = skipRulesByTarget.get(q
+								.getId());
+						String constraint = buildSkipRuleLogic(formDef,
+								skipRules, q);
+						Object lastRule = skipRules.toArray()[skipRules.size() - 1];
+						String action = buildAction(((SkipRule) lastRule)
+								.getAction());
+						bindArgs.add(constraint);
+						bindArgs.add(action);
+					}
+
+					bindBuf.append("/>");
+					buf.append(MessageFormat.format(bindBuf.toString(),
+							bindArgs.toArray()));
+					buf.append('\n');
 				}
 			}
 	}
@@ -569,6 +569,7 @@ public class ModelToXML {
 		case QuestionDef.QTN_TYPE_TEXT:
 		case QuestionDef.QTN_TYPE_TIME:
 		case QuestionDef.QTN_TYPE_VIDEO:
+		case QuestionDef.QTN_TYPE_REPEAT:
 			return true;
 		default:
 			return false;
