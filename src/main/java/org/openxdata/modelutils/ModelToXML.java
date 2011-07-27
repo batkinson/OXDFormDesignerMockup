@@ -438,7 +438,7 @@ public class ModelToXML {
 			String defaultValue = question.getDefaultValue();
 			if (defaultValue != null && !"".equals(defaultValue))
 				buf.append(MessageFormat.format("<{0}>{1}</{0}>\n",
-						lastElement, StringEscapeUtils.escapeXml(defaultValue)));
+						lastElement, defaultValue));
 			else
 				buf.append(MessageFormat.format("<{0}/>\n", lastElement));
 		} else {
