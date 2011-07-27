@@ -261,6 +261,8 @@ public class ModelToXML {
 				boolean generateRelevant = skipRulesByTarget.containsKey(q
 						.getId());
 				boolean generateRequired = q.isMandatory();
+				boolean generateReadonly = !q.isEnabled();
+
 				String qid = tree[tree.length - 1];
 
 				if (generateBind) {
@@ -322,6 +324,13 @@ public class ModelToXML {
 						bindBuf.append(bindArgs.size());
 						bindBuf.append("}()\"");
 						bindArgs.add(q.isMandatory());
+					}
+
+					if (generateReadonly) {
+						bindBuf.append(" readonly=\"{");
+						bindBuf.append(bindArgs.size());
+						bindBuf.append("}()\"");
+						bindArgs.add(!q.isEnabled());
 					}
 
 					bindBuf.append("/>");

@@ -118,6 +118,7 @@ public class ModelToXMLTest extends TestCase {
 		String[] exprs = {
 				"count(//xf:bind[@id='patientid' and @nodeset='/patientreg/patientid' and @type='xsd:string'])",
 				"count(//xf:bind[@id='lastname' and @nodeset='/patientreg/lastname' and @required='true()' and @type='xsd:string'])",
+				"count(//xf:bind[@id='pregnant' and @nodeset='/patientreg/pregnant' and @readonly='true()' and @type='xsd:boolean'])",
 				"count(//xf:bind[@id='picture' and @nodeset='/patientreg/picture' and @type='xsd:base64Binary' and @format='image'])",
 				"count(//xf:bind[@id='coughsound' and @nodeset='/patientreg/coughsound' and @format='audio' and @type='xsd:base64Binary'])",
 				"count(//xf:bind[@id='recordvideo' and @nodeset='/patientreg/recordvideo' and @format='video' and @type='xsd:base64Binary'])",
@@ -127,7 +128,8 @@ public class ModelToXMLTest extends TestCase {
 				"count(//xf:bind[@id='height' and @nodeset='/patientreg/height' and @type='xsd:int'])",
 				"count(//xf:bind[@id='birthdate' and @nodeset='/patientreg/birthdate' and @type='xsd:date'])",
 				"count(//xf:bind[@id='starttime' and @nodeset='/patientreg/starttime' and @type='xsd:time'])",
-				"count(//xf:bind[@id='visitdate' and @nodeset='/patientreg/visitdate' and @type='xsd:dateTime'])" };
+				"count(//xf:bind[@id='visitdate' and @nodeset='/patientreg/visitdate' and @type='xsd:dateTime'])",
+				"count(//xf:bind[@id='kid' and @nodeset='/patientreg/kids/kid' and @readonly='true()'])" };
 		for (String expr : exprs) {
 			convertedStream.reset(); // Restore stream state
 			XPathExpression compiledExpr = xpath.compile(expr);
