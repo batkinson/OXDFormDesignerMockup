@@ -7,7 +7,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.Vector;
 
 import org.fcitmuk.epihandy.Condition;
@@ -42,9 +41,15 @@ public class ModelToXML {
 	private static final String PHONENUMBER_BINDFORMAT = "phonenumber";
 
 	public static String convert(FormDef formDef) {
-		StringBuilder buf = new StringBuilder();
 		if (formDef == null)
 			throw new IllegalArgumentException("form def can not be null");
+
+		StringBuilder buf = new StringBuilder();
+
+		QuestionTree qTree = QuestionTree.constructTreeFromFormDef(formDef);
+
+		if (log.isDebugEnabled())
+			log.debug("parsed question tree: \n" + qTree);
 
 		// Build a reverse map of targets to skip rules that affect them
 		Map<Short, Set<SkipRule>> skipRulesByTarget = getSkipRulesByTargetId(formDef);
@@ -59,7 +64,7 @@ public class ModelToXML {
 		buf.append('\n');
 		buf.append("\t<xf:model>");
 		buf.append('\n');
-		generateMainInstance(formDef, buf);
+		generateMainInstance(qTree, buf);
 		buf.append('\n');
 		generateDynListInstances(formDef, buf, dynOptDepMap);
 		generateBindings(formDef, buf, skipRulesByTarget);
@@ -328,8 +333,11 @@ public class ModelToXML {
 			}
 	}
 
-	@SuppressWarnings("unchecked")
-	private static void generateMainInstance(FormDef formDef, StringBuilder buf) {
+	private static void generateMainInstance(QuestionTree rootTree,
+			StringBuilder buf) {
+
+		FormDef formDef = rootTree.getFormDef();
+
 		buf.append(MessageFormat.format("\t\t<xf:instance id=\"{0}\">",
 				formDef.getVariableName()));
 		buf.append('\n');
@@ -341,47 +349,63 @@ public class ModelToXML {
 						formDef.getDescriptionTemplate(), formDef.getId(),
 						formDef.getName()));
 		buf.append('\n');
-		for (PageDef p : (Vector<PageDef>) formDef.getPages())
-			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
-				String[] tree = q.getVariableName().split("/\\s*");
-				Stack<String> stack = new Stack<String>();
-				for (int i = 0; i < tree.length; i++) {
-					if ("".equals(tree[i])
-							|| formDef.getVariableName().equals(tree[i]))
-						continue;
-
-					if (tree.length > 3 && stack.size() > 0)
-						buf.append('\n');
-
-					for (int depth = 0; depth < stack.size(); depth++)
-						buf.append('\t');
-
-					buf.append("\t\t\t\t");
-					buf.append('<');
-					buf.append(tree[i]);
-					buf.append('>');
-					stack.push(tree[i]);
-				}
-				while (!stack.isEmpty()) {
-					String item = stack.pop();
-					if (tree.length > 3) {
-						for (int depth = 0; depth < stack.size(); depth++)
-							buf.append('\t');
-						buf.append("\t\t\t\t");
-					} else if (q.getDefaultValue() != null
-							&& !"".equals(q.getDefaultValue())) {
-						buf.append(q.getDefaultValue());
-					}
-					buf.append("</");
-					buf.append(item);
-					buf.append('>');
-					buf.append('\n');
-				}
+		if (!rootTree.isLeaf()) {
+			for (QuestionTree childTree : rootTree.getChildren()) {
+				generateInstanceElement(childTree, buf);
 			}
+		}
 		buf.append(MessageFormat.format("\t\t\t</{0}>",
 				formDef.getVariableName()));
 		buf.append('\n');
 		buf.append("\t\t</xf:instance>");
+	}
+
+	private static void generateInstanceElement(QuestionTree tree,
+			StringBuilder buf) {
+
+		FormDef form = tree.getFormDef();
+		QuestionDef question = tree.getQuestion();
+		String instanceBinding = "/" + form.getVariableName() + "/";
+		String questionBinding = tree.getQuestion().getVariableName();
+		StringBuilder pad = new StringBuilder("\t\t\t\t");
+		for (int i = 1; i < tree.getDepth(); i++)
+			pad.append('\t');
+
+		if (questionBinding.startsWith(instanceBinding))
+			questionBinding = questionBinding.substring(instanceBinding
+					.length());
+
+		String[] elements = questionBinding.split("/");
+		for (int elem = 0; elem < elements.length - 1; elem++) {
+			buf.append(pad);
+			for (int depth = 0; depth < elem; depth++)
+				buf.append('\t');
+			buf.append(MessageFormat.format("<{0}>\n", elements[elem]));
+		}
+
+		String lastElement = elements[elements.length - 1];
+		if (tree.isLeaf()) {
+			buf.append(pad);
+			String defaultValue = question.getDefaultValue();
+			if (defaultValue != null && !"".equals(defaultValue))
+				buf.append(MessageFormat.format("<{0}>{1}</{0}>\n",
+						lastElement, defaultValue));
+			else
+				buf.append(MessageFormat.format("<{0}/>\n", lastElement));
+		} else {
+			buf.append(MessageFormat.format("{0}\t<{1}>\n", pad, lastElement));
+			for (QuestionTree childTree : tree.getChildren())
+				generateInstanceElement(childTree, buf);
+			buf.append(MessageFormat.format("{0}\t</{1}>\n", pad, lastElement));
+		}
+
+		for (int elem = elements.length - 2; elem >= 0; elem--) {
+			buf.append(pad);
+			for (int depth = 0; depth < elem; depth++)
+				buf.append('\t');
+			String elementName = elements[elem];
+			buf.append(MessageFormat.format("</{0}>\n", elementName));
+		}
 	}
 
 	public static String buildAction(byte action) {

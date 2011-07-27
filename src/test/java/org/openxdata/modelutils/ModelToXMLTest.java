@@ -322,4 +322,22 @@ public class ModelToXMLTest extends TestCase {
 					matchCount.intValue());
 		}
 	}
+
+	public void testRepeatInstanceConversion() throws Exception {
+		String matchPattern = "count(//xf:instance[@id=''{0}'']/{0}/kids/kid/{1})";
+		String[] matchParams = { "kidname", "kidsex", "kidage" };
+
+		String instanceId = "patientreg";
+
+		for (String matchParam : matchParams) {
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern, new Object[] {
+					instanceId, matchParam });
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " repeat instance element not present ", 1,
+					matchCount.intValue());
+		}
+	}
 }
