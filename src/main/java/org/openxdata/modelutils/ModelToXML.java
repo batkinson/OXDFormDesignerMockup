@@ -83,10 +83,12 @@ public class ModelToXML {
 	@SuppressWarnings("unchecked")
 	private static Map<Short, QuestionDef> getDynOptDepMap(FormDef formDef) {
 		Map<Short, QuestionDef> dynOptDepMap = new HashMap<Short, QuestionDef>();
-		for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) formDef
-				.getDynamicOptions().entrySet()) {
-			dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
-					formDef.getQuestion(dynOptEntry.getKey()));
+		if (formDef.getDynamicOptions() != null) {
+			for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) formDef
+					.getDynamicOptions().entrySet()) {
+				dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
+						formDef.getQuestion(dynOptEntry.getKey()));
+			}
 		}
 		return dynOptDepMap;
 	}
