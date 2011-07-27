@@ -260,7 +260,8 @@ public class ModelToXML {
 						formDef, q);
 				boolean generateRelevant = skipRulesByTarget.containsKey(q
 						.getId());
-				boolean generateRequired = q.isMandatory();
+				boolean generateRequired = q.isMandatory()
+						|| (generateRelevant && !q.isMandatory());
 				boolean generateReadonly = !q.isEnabled();
 
 				String qid = tree[tree.length - 1];
