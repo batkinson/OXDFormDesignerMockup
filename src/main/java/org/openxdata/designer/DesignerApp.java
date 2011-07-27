@@ -18,7 +18,6 @@ import java.util.Locale;
 import org.apache.pivot.beans.BXML;
 import org.apache.pivot.beans.BXMLSerializer;
 import org.apache.pivot.collections.ArrayList;
-import org.apache.pivot.collections.HashMap;
 import org.apache.pivot.collections.List;
 import org.apache.pivot.collections.Map;
 import org.apache.pivot.collections.Sequence;
@@ -34,7 +33,6 @@ import org.apache.pivot.web.QueryException;
 import org.apache.pivot.wtk.Alert;
 import org.apache.pivot.wtk.Application;
 import org.apache.pivot.wtk.BoxPane;
-import org.apache.pivot.wtk.CardPane;
 import org.apache.pivot.wtk.Clipboard;
 import org.apache.pivot.wtk.Dialog;
 import org.apache.pivot.wtk.DialogCloseListener;
@@ -47,24 +45,26 @@ import org.apache.pivot.wtk.MenuHandler;
 import org.apache.pivot.wtk.MessageType;
 import org.apache.pivot.wtk.Orientation;
 import org.apache.pivot.wtk.Prompt;
-import org.apache.pivot.wtk.TableView;
+import org.apache.pivot.wtk.TabPane;
+import org.apache.pivot.wtk.TabPaneSelectionListener;
 import org.apache.pivot.wtk.TaskAdapter;
-import org.apache.pivot.wtk.TextArea;
 import org.apache.pivot.wtk.TextInput;
+import org.apache.pivot.wtk.TextPane;
 import org.apache.pivot.wtk.Theme;
 import org.apache.pivot.wtk.TreeView;
 import org.apache.pivot.wtk.VerticalAlignment;
 import org.apache.pivot.wtk.Window;
 import org.apache.pivot.wtk.effects.OverlayDecorator;
-import org.apache.pivot.xml.Element;
-import org.apache.pivot.xml.Node;
-import org.apache.pivot.xml.TextNode;
-import org.apache.pivot.xml.XMLSerializer;
+import org.apache.pivot.wtk.text.Document;
+import org.apache.pivot.wtk.text.PlainTextSerializer;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.xform.EpihandyXform;
 import org.openxdata.designer.util.Form;
 import org.openxdata.designer.util.Option;
 import org.openxdata.designer.util.Question;
+import org.openxdata.modelutils.ModelToXML;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main entry point of the form designer application.
@@ -78,26 +78,19 @@ public class DesignerApp implements Application {
 	public static final String LANGUAGE_KEY = "language";
 	public static final String APPLICATION_KEY = "application";
 
+	private Logger log = LoggerFactory.getLogger(DesignerApp.class);
+
 	@BXML
-	private TreeView formTree;
+	private TabPane tabPane;
+
+	@BXML
+	private TextPane formText;
 
 	@BXML
 	private TreeView designTree;
 
 	@BXML
 	private TreeView dynamicOptionTree;
-
-	@BXML
-	private CardPane propertiesCardPane;
-
-	@BXML
-	private TableView namespacesTableView;
-
-	@BXML
-	private TableView attributesTableView;
-
-	@BXML
-	private TextArea textArea;
 
 	private Window window;
 
@@ -181,8 +174,26 @@ public class DesignerApp implements Application {
 					prompt.getStyles().put("verticalAlignment",
 							VerticalAlignment.CENTER);
 					promptDecorator.setOverlay(prompt);
-					formTree.getDecorators().add(promptDecorator);
+					formText.getDecorators().add(promptDecorator);
 					designTree.getDecorators().add(promptDecorator);
+
+					tabPane.getTabPaneSelectionListeners().add(
+							new TabPaneSelectionListener.Adapter() {
+								@Override
+								public void selectedIndexChanged(
+										TabPane tabPane,
+										int previousSelectedIndex) {
+									try {
+										DesignerApp.this.updateXForm();
+									} catch (Exception e) {
+										log.error(
+												"failed to update xform text",
+												e);
+									}
+									super.selectedIndexChanged(tabPane,
+											previousSelectedIndex);
+								}
+							});
 
 					window.open(display);
 
@@ -219,6 +230,7 @@ public class DesignerApp implements Application {
 						xml.getBytes());
 				importFormDefinition(is);
 			} catch (Exception exception) {
+				log.error("exception while pasting", exception);
 				Prompt.prompt(exception.getMessage(), window);
 			}
 
@@ -395,6 +407,7 @@ public class DesignerApp implements Application {
 							}
 						}
 					} catch (Exception exception) {
+						log.error("exception while dropping", exception);
 						Prompt.prompt(exception.getMessage(), window);
 					}
 
@@ -418,7 +431,7 @@ public class DesignerApp implements Application {
 
 		// Remove prompt decorator
 		if (promptDecorator != null) {
-			formTree.getDecorators().remove(promptDecorator);
+			formText.getDecorators().remove(promptDecorator);
 			designTree.getDecorators().remove(promptDecorator);
 			promptDecorator = null;
 		}
@@ -431,23 +444,18 @@ public class DesignerApp implements Application {
 		while ((line = br.readLine()) != null) {
 			sb.append(line);
 		}
-
 		String xform = sb.toString();
-		setXForm(xform);
 		setDesign(xform);
+		updateXForm();
 	}
 
-	private void setXForm(String xformXml) throws SerializationException {
-		XMLSerializer xs = new XMLSerializer();
-		Element document = (Element) xs.readObject(new StringReader(xformXml));
-
-		ArrayList<Element> xmlData = new ArrayList<Element>();
-		xmlData.add(document);
-		formTree.setTreeData(xmlData);
-
-		Sequence.Tree.Path path = new Sequence.Tree.Path(0);
-		formTree.expandBranch(path);
-		formTree.setSelectedPath(path);
+	private void updateXForm() throws SerializationException, IOException {
+		FormDef formDef = (FormDef) designTree.getTreeData().get(0);
+		String exportedXform = ModelToXML.convert(formDef);
+		PlainTextSerializer textSerializer = new PlainTextSerializer();
+		Document doc = textSerializer
+				.readObject(new StringReader(exportedXform));
+		formText.setDocument(doc);
 	}
 
 	private void setDesign(String xformsXml) {
@@ -462,58 +470,6 @@ public class DesignerApp implements Application {
 		path = new Sequence.Tree.Path(0);
 		designTree.expandBranch(path);
 		designTree.setSelectedPath(path);
-	}
-
-	public void updateProperties() {
-		Node node = (Node) formTree.getSelectedNode();
-
-		if (node instanceof TextNode) {
-			TextNode textNode = (TextNode) node;
-			textArea.setText(textNode.getText());
-			propertiesCardPane.setSelectedIndex(1);
-		} else if (node instanceof Element) {
-			Element element = (Element) node;
-
-			// Populate the namespaces table
-			ArrayList<HashMap<String, String>> namespacesTableData = new ArrayList<HashMap<String, String>>();
-
-			String defaultNamespaceURI = element.getDefaultNamespaceURI();
-			if (defaultNamespaceURI != null) {
-				HashMap<String, String> row = new HashMap<String, String>();
-				row.put("prefix", "(default)");
-				row.put("uri", defaultNamespaceURI);
-				namespacesTableData.add(row);
-			}
-
-			Element.NamespaceDictionary namespaceDictionary = element
-					.getNamespaces();
-			for (String prefix : namespaceDictionary) {
-				HashMap<String, String> row = new HashMap<String, String>();
-				row.put("prefix", prefix);
-				row.put("uri", namespaceDictionary.get(prefix));
-				namespacesTableData.add(row);
-			}
-
-			namespacesTableView.setTableData(namespacesTableData);
-
-			// Populate the attributes table
-			ArrayList<HashMap<String, String>> attributesTableData = new ArrayList<HashMap<String, String>>();
-
-			for (Element.Attribute attribute : element.getAttributes()) {
-				HashMap<String, String> row = new HashMap<String, String>();
-
-				String attributeName = attribute.getName();
-				row.put("name", attributeName);
-				row.put("value", element.get(attributeName));
-				attributesTableData.add(row);
-			}
-
-			attributesTableView.setTableData(attributesTableData);
-
-			propertiesCardPane.setSelectedIndex(0);
-		} else {
-			throw new IllegalStateException();
-		}
 	}
 
 	public boolean shutdown(boolean optional) throws Exception {

@@ -14,85 +14,11 @@
 		<bxml:include bxml:id="dynamicOptionDialog" src="dynamicOptionDialog.bxml" inline="true" />
 		<bxml:include bxml:id="skipRuleDialog" src="skipRuleDialog.bxml" />
 		<bxml:include bxml:id="validationRuleDialog" src="validationRuleDialog.bxml" />
-    </bxml:define>
-    
+	</bxml:define>
+
 	<bxml:script src="dragdrop.js" />
 	
-	<TabPane bxml:id="tabPane" selectedIndex="1">
-		<SplitPane orientation="horizontal" splitRatio="0.75">
-			<TabPane.tabData>
-				<content:ButtonData text="%xformTab" />
-			</TabPane.tabData>
-			<left>
-				<Border styles="{color:10, padding:6}">
-					<ScrollPane horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
-						<TreeView bxml:id="formTree" dropTarget="$formTreeDropTarget">
-							<nodeRenderer>
-								<formtree:NodeRenderer/>
-							</nodeRenderer>
-							<componentKeyListeners>
-								<![CDATA[
-								importPackage(org.apache.pivot.wtk);
-								function keyPressed(component, keyCode, keyLocation) {
-									if (keyCode == Keyboard.KeyCode.V && Keyboard.isPressed(Platform.getCommandModifier())) {
-										application.paste();
-									}
-								}
-								]]>
-							</componentKeyListeners>
-							<treeViewSelectionListeners>
-								<![CDATA[
-								function selectedPathsChanged(treeView, previousSelectedPaths) {
-									application.updateProperties();
-								}
-								]]>
-							</treeViewSelectionListeners>
-						</TreeView>
-	       			</ScrollPane>
-	   			</Border>
-			</left>
-			<right>
-				<CardPane bxml:id="propertiesCardPane">
-					<SplitPane orientation="vertical" splitRatio="0.2">
-						<top>
-							<Border styles="{color:10}">
-								<ScrollPane horizontalScrollBarPolicy="fill" verticalScrollBarPolicy="fill_to_capacity">
-									<TableView bxml:id="namespacesTableView" selectMode="none">
-										<columns>
-											<TableView.Column name="prefix" width="1*" headerData="Prefix"/>
-											<TableView.Column name="uri" width="2*" headerData="URI"/>
-										</columns>
-									</TableView>
-									<columnHeader>
-										<TableViewHeader tableView="$namespacesTableView" styles="{headersPressable:false}"/>
-									</columnHeader>
-								</ScrollPane>
-							</Border>
-						</top>
-						<bottom>
-							<Border styles="{color:10}">
-								<ScrollPane horizontalScrollBarPolicy="fill" verticalScrollBarPolicy="fill_to_capacity">
-									<TableView bxml:id="attributesTableView" selectMode="none">
-										<columns>
-											<TableView.Column name="name" width="1*" headerData="Name"/>
-											<TableView.Column name="value" width="1*" headerData="Value"/>
-										</columns>
-									</TableView>
-									<columnHeader>
-										<TableViewHeader tableView="$attributesTableView" styles="{headersPressable:false}"/>
-									</columnHeader>
-								</ScrollPane>
-							</Border>
-						</bottom>
-					</SplitPane>
-					<Border styles="{color:10}">
-						<ScrollPane horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
-							<TextArea bxml:id="textArea" editable="false" styles="{wrapText:false}"/>
-						</ScrollPane>
-					</Border>
-				</CardPane>
-			</right>
-		</SplitPane>
+	<TabPane bxml:id="tabPane">
 		<GridPane columnCount="1">
 			<TabPane.tabData>
 				<content:ButtonData text="%designTab" />
@@ -121,6 +47,29 @@
 								]]>
 							</componentKeyListeners>
 						</TreeView>
+					</ScrollPane>
+				</Border>
+			</GridPane.Row>
+		</GridPane>
+		<GridPane columnCount="1">
+			<TabPane.tabData>
+				<content:ButtonData text="%xformTab" />
+			</TabPane.tabData>
+			<GridPane.Row>
+				<Border styles="{color:10, padding:6}">
+					<ScrollPane horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
+						<TextPane bxml:id="formText" dropTarget="$formTreeDropTarget" editable="false">
+							<componentKeyListeners>
+								<![CDATA[
+								importPackage(org.apache.pivot.wtk);
+								function keyPressed(component, keyCode, keyLocation) {
+									if (keyCode == Keyboard.KeyCode.V && Keyboard.isPressed(Platform.getCommandModifier())) {
+										application.paste();
+									}
+								}
+								]]>
+							</componentKeyListeners>
+						</TextPane>
 					</ScrollPane>
 				</Border>
 			</GridPane.Row>
