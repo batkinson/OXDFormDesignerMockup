@@ -116,21 +116,15 @@ public class ModelToXML {
 		FormDef formDef = questionTree.getFormDef();
 
 		for (PageDef p : (Vector<PageDef>) formDef.getPages()) {
-			buf.append(MessageFormat.format("\t<xf:group id=\"{0}\">",
+			buf.append(MessageFormat.format("\t<xf:group id=\"{0}\">\n",
 					p.getPageNo()));
-			buf.append('\n');
-			buf.append(MessageFormat.format("\t\t<xf:label>{0}</xf:label>",
+			buf.append(MessageFormat.format("\t\t<xf:label>{0}</xf:label>\n",
 					p.getName()));
-			buf.append('\n');
-
 			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
 				QuestionTree qTree = questionTree.getTreeForQuestion(q);
 				generateQuestionControl(qTree, dynOptDepMap, buf);
 			}
-
-			buf.append('\n');
-			buf.append("\t</xf:group>");
-			buf.append('\n');
+			buf.append("\t</xf:group>\n");
 		}
 	}
 
