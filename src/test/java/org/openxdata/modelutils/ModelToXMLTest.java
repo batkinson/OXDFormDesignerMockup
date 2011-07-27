@@ -340,4 +340,20 @@ public class ModelToXMLTest extends TestCase {
 					matchCount.intValue());
 		}
 	}
+
+	public void testRepeatControlConversion() throws Exception {
+		String matchPattern = "count(//xf:group[@id=''{0}'' and xf:label = ''{1}'' and xf:repeat[@bind=''{2}'']])";
+		String[][] matchParams = { { "kids/kid", "Kids", "kid" } };
+
+		for (String[] matchParam : matchParams) {
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern,
+					(Object[]) matchParam);
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " repeat control not present ", 1,
+					matchCount.intValue());
+		}
+	}
 }

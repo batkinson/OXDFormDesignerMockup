@@ -124,6 +124,9 @@ public class ModelToXML {
 
 				byte qType = q.getType();
 				String qPath = q.getVariableName();
+				String instancePath = "/" + formDef.getVariableName() + "/";
+				if (qPath.startsWith(instancePath))
+					qPath = qPath.substring(instancePath.length());
 				String qName = q.getText();
 				String[] tree = q.getVariableName().split("/\\s*");
 				String qId = tree[tree.length - 1];
@@ -133,7 +136,10 @@ public class ModelToXML {
 							"\t\t<xf:group id=\"{0}\">", qPath));
 					buf.append('\n');
 					buf.append(MessageFormat.format(
-							"\t\t\t<xf:label>{0}</xf:label>", qName));
+							"\t\t\t<xf:label>{0}</xf:label>\n", qName));
+					buf.append(MessageFormat.format(
+							"\t\t\t<xf:repeat bind=\"{1}\">{0}</xf:repeat>",
+							qName, qId));
 					buf.append('\n');
 					buf.append("\t\t</xf:group>\n");
 				} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE) {
