@@ -47,9 +47,6 @@ public class ModelToXML {
 
 		QuestionTree qTree = QuestionTree.constructTreeFromFormDef(formDef);
 
-		if (log.isDebugEnabled())
-			log.debug("parsed question tree: \n" + qTree);
-
 		// Build a reverse map of targets to skip rules that affect them
 		Map<Short, Set<SkipRule>> skipRulesByTarget = getSkipRulesByTargetId(formDef);
 
@@ -68,10 +65,12 @@ public class ModelToXML {
 		generateControls(qTree, dynOptDepMap, buf);
 		buf.append("</xf:xforms>\n");
 
-		if (log.isDebugEnabled())
-			log.debug("converted form:\n" + buf.toString());
+		String result = buf.toString();
 
-		return buf.toString();
+		if (log.isDebugEnabled())
+			log.debug("converted form:\n" + result);
+
+		return result;
 	}
 
 	@SuppressWarnings("unchecked")

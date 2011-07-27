@@ -9,14 +9,18 @@ import java.util.Vector;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.QuestionDef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class QuestionTree {
 
-	int depth;
-	FormDef form;
-	QuestionDef question;
-	QuestionTree parent;
-	List<QuestionTree> children;
+	private static Logger log = LoggerFactory.getLogger(QuestionTree.class);
+
+	private int depth;
+	private FormDef form;
+	private QuestionDef question;
+	private QuestionTree parent;
+	private List<QuestionTree> children;
 
 	QuestionTree(FormDef form) {
 		this(null, null);
@@ -123,6 +127,10 @@ class QuestionTree {
 				constructTreeFromQuestion(result, q);
 			}
 		}
+
+		if (log.isDebugEnabled())
+			log.debug("parsed question tree: \n" + result);
+
 		return result;
 	}
 
