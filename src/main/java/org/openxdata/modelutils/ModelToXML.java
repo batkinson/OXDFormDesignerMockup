@@ -1,18 +1,31 @@
 package org.openxdata.modelutils;
 
+import static org.openxdata.modelutils.OptionUtils.getDynOptDepMap;
+import static org.openxdata.modelutils.OptionUtils.getPossibleValues;
+import static org.openxdata.modelutils.QuestionUtils.getIdFromVarName;
+import static org.openxdata.modelutils.QuestionUtils.getPathFromVariableName;
+import static org.openxdata.modelutils.QuestionUtils.questionTypeGeneratesBind;
+import static org.openxdata.modelutils.QuestionUtils.questionTypeGeneratesBindFormat;
+import static org.openxdata.modelutils.QuestionUtils.questionTypeGeneratesBoundInput;
+import static org.openxdata.modelutils.QuestionUtils.questionTypeGeneratesBoundUpload;
+import static org.openxdata.modelutils.QuestionUtils.questionTypeToFormat;
+import static org.openxdata.modelutils.QuestionUtils.questionTypeToMediaType;
+import static org.openxdata.modelutils.QuestionUtils.questionTypeToSchemaType;
+import static org.openxdata.modelutils.RuleUtils.buildAction;
+import static org.openxdata.modelutils.RuleUtils.buildConstraintFromRule;
+import static org.openxdata.modelutils.RuleUtils.buildSkipRuleLogic;
+import static org.openxdata.modelutils.RuleUtils.getSkipRulesByTargetId;
+import static org.openxdata.modelutils.RuleUtils.questionGeneratesValidationRule;
+
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.fcitmuk.epihandy.Condition;
 import org.fcitmuk.epihandy.DynamicOptionDef;
-import org.fcitmuk.epihandy.EpihandyConstants;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.PageDef;
@@ -25,21 +38,6 @@ import org.slf4j.LoggerFactory;
 public class ModelToXML {
 
 	private static Logger log = LoggerFactory.getLogger(ModelToXML.class);
-
-	public static String BASE64_XSDTYPE = "xsd:base64Binary";
-	public static String BOOLEAN_XSDTYPE = "xsd:boolean";
-	public static String STRING_XSDTYPE = "xsd:string";
-	private static final String DATE_XSDTYPE = "xsd:date";
-	private static final String DATETIME_XSDTYPE = "xsd:dateTime";
-	private static final String INTEGER_XSDTYPE = "xsd:int";
-	private static final String DECIMAL_XSDTYPE = "xsd:decimal";
-	private static final String TIME_XDSTYPE = "xsd:time";
-
-	private static final String AUDIO_BINDFORMAT = "audio";
-	private static final String VIDEO_BINDFORMAT = "video";
-	private static final String IMAGE_BINDFORMAT = "image";
-	private static final String GPS_BINDFORMAT = "gps";
-	private static final String PHONENUMBER_BINDFORMAT = "phonenumber";
 
 	public static String convert(FormDef formDef) {
 		if (formDef == null)
@@ -74,37 +72,6 @@ public class ModelToXML {
 			log.debug("converted form:\n" + buf.toString());
 
 		return buf.toString();
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Map<Short, QuestionDef> getDynOptDepMap(FormDef formDef) {
-		Map<Short, QuestionDef> dynOptDepMap = new HashMap<Short, QuestionDef>();
-		if (formDef.getDynamicOptions() != null) {
-			for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) formDef
-					.getDynamicOptions().entrySet()) {
-				dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
-						formDef.getQuestion(dynOptEntry.getKey()));
-			}
-		}
-		return dynOptDepMap;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Map<Short, Set<SkipRule>> getSkipRulesByTargetId(
-			FormDef formDef) {
-		Map<Short, Set<SkipRule>> skipRulesByTarget = new HashMap<Short, Set<SkipRule>>();
-		for (SkipRule skipRule : (Vector<SkipRule>) formDef.getSkipRules()) {
-			for (Short targetQuestionId : (Vector<Short>) skipRule
-					.getActionTargets()) {
-				Set<SkipRule> ruleSet = skipRulesByTarget.get(targetQuestionId);
-				if (ruleSet == null) {
-					ruleSet = new LinkedHashSet<SkipRule>();
-					skipRulesByTarget.put(targetQuestionId, ruleSet);
-				}
-				ruleSet.add(skipRule);
-			}
-		}
-		return skipRulesByTarget;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -467,273 +434,5 @@ public class ModelToXML {
 			String elementName = elements[elem];
 			buf.append(MessageFormat.format("</{0}>\n", elementName));
 		}
-	}
-
-	public static String buildAction(byte action) {
-		StringBuilder buf = new StringBuilder();
-
-		if ((action & EpihandyConstants.ACTION_HIDE) != 0)
-			buf.append("hide");
-		else if ((action & EpihandyConstants.ACTION_SHOW) != 0)
-			buf.append("show");
-		else if ((action & EpihandyConstants.ACTION_DISABLE) != 0)
-			buf.append("disable");
-		else if ((action & EpihandyConstants.ACTION_ENABLE) != 0)
-			buf.append("enable");
-
-		if ((action & EpihandyConstants.ACTION_MAKE_MANDATORY) != 0)
-			buf.append("|true()");
-
-		return buf.toString();
-	}
-
-	@SuppressWarnings("unchecked")
-	public static String buildSkipRuleLogic(FormDef form,
-			Set<SkipRule> skipRules, QuestionDef target) {
-
-		StringBuilder buf = new StringBuilder();
-		for (SkipRule rule : skipRules) {
-			String op = rule.getConditionsOperator() == EpihandyConstants.CONDITIONS_OPERATOR_AND ? "and"
-					: "or";
-
-			Vector<Condition> conditions = (Vector<Condition>) rule
-					.getConditions();
-			for (int i = 0; i < conditions.size(); i++) {
-
-				Condition c = conditions.get(i);
-
-				String qPath = null;
-				if (target.getId() == c.getQuestionId())
-					qPath = ".";
-				else
-					qPath = form.getQuestion(c.getQuestionId())
-							.getVariableName();
-
-				buf.append(qPath);
-				buf.append(' ');
-				buf.append(opTypeToString(c.getOperator()));
-				buf.append(" '");
-				buf.append(c.getValue());
-				buf.append('\'');
-
-				if (i < conditions.size() - 1 && conditions.size() > 1) {
-					buf.append(' ');
-					buf.append(op);
-					buf.append(' ');
-				}
-			}
-		}
-		return buf.toString();
-	}
-
-	@SuppressWarnings("unchecked")
-	public static String buildConstraintFromRule(FormDef form,
-			ValidationRule rule) {
-
-		StringBuilder buf = new StringBuilder();
-		String op = rule.getConditionsOperator() == EpihandyConstants.CONDITIONS_OPERATOR_AND ? "and"
-				: "or";
-
-		Vector<Condition> conditions = (Vector<Condition>) rule.getConditions();
-		for (int i = 0; i < conditions.size(); i++) {
-
-			Condition c = conditions.get(i);
-
-			String qPath = null;
-			if (rule.getQuestionId() == c.getQuestionId())
-				qPath = ".";
-			else
-				qPath = form.getQuestion(c.getQuestionId()).getVariableName();
-
-			if (c.getFunction() == EpihandyConstants.FUNCTION_LENGTH)
-				buf.append(MessageFormat.format("length({0})", qPath));
-			else
-				buf.append(qPath);
-			buf.append(' ');
-			buf.append(opTypeToString(c.getOperator()));
-			buf.append(' ');
-			buf.append(c.getValue());
-
-			if (i < conditions.size() - 1 && conditions.size() > 1) {
-				buf.append(' ');
-				buf.append(op);
-				buf.append(' ');
-			}
-		}
-		return buf.toString();
-	}
-
-	private static Map<Byte, String> opMap = new HashMap<Byte, String>();
-
-	static {
-		opMap.put(EpihandyConstants.OPERATOR_EQUAL, "=");
-		opMap.put(EpihandyConstants.OPERATOR_NOT_EQUAL, "!=");
-		opMap.put(EpihandyConstants.OPERATOR_LESS, "&lt;");
-		opMap.put(EpihandyConstants.OPERATOR_LESS_EQUAL, "&lt;=");
-		opMap.put(EpihandyConstants.OPERATOR_GREATER, "&gt;");
-		opMap.put(EpihandyConstants.OPERATOR_GREATER_EQUAL, "&gt;=");
-	}
-
-	public static String opTypeToString(byte opType) {
-		return opMap.get(opType);
-	}
-
-	@SuppressWarnings("unchecked")
-	public static Map<Short, OptionDef> getPossibleValues(FormDef form,
-			QuestionDef question, QuestionDef parentQuestion) {
-		Map<Short, OptionDef> valuesById = new HashMap<Short, OptionDef>();
-		byte questionType = question.getType();
-		if (questionType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE
-				|| questionType == QuestionDef.QTN_TYPE_LIST_MULTIPLE) {
-			for (OptionDef option : (Vector<OptionDef>) question.getOptions())
-				valuesById.put(option.getId(), option);
-		} else if (questionType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
-			Map<Short, Vector<OptionDef>> optMap = (Map<Short, Vector<OptionDef>>) form
-					.getDynamicOptions(parentQuestion.getId())
-					.getParentToChildOptions();
-			for (Map.Entry<Short, Vector<OptionDef>> entry : optMap.entrySet())
-				for (OptionDef option : entry.getValue())
-					valuesById.put(option.getId(), option);
-		}
-		return valuesById;
-	}
-
-	public static String[] getPathFromVariableName(String varName) {
-		String trimmedString = varName.trim();
-		String[] path = trimmedString.split("/");
-		return path;
-	}
-
-	public static String getIdFromVarName(String varName) {
-		String[] path = getPathFromVariableName(varName);
-		return path[path.length - 1];
-	}
-
-	public static boolean questionTypeGeneratesBind(byte type) {
-		switch (type) {
-		case QuestionDef.QTN_TYPE_AUDIO:
-		case QuestionDef.QTN_TYPE_BARCODE:
-		case QuestionDef.QTN_TYPE_BOOLEAN:
-		case QuestionDef.QTN_TYPE_DATE:
-		case QuestionDef.QTN_TYPE_DATE_TIME:
-		case QuestionDef.QTN_TYPE_DECIMAL:
-		case QuestionDef.QTN_TYPE_GPS:
-		case QuestionDef.QTN_TYPE_IMAGE:
-		case QuestionDef.QTN_TYPE_LIST_EXCLUSIVE:
-		case QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC:
-		case QuestionDef.QTN_TYPE_LIST_MULTIPLE:
-		case QuestionDef.QTN_TYPE_NUMERIC:
-		case QuestionDef.QTN_TYPE_PHONENUMBER:
-		case QuestionDef.QTN_TYPE_TEXT:
-		case QuestionDef.QTN_TYPE_TIME:
-		case QuestionDef.QTN_TYPE_VIDEO:
-		case QuestionDef.QTN_TYPE_REPEAT:
-			return true;
-		default:
-			return false;
-		}
-	}
-
-	public static String questionTypeToSchemaType(byte type) {
-
-		switch (type) {
-		case QuestionDef.QTN_TYPE_AUDIO:
-			return BASE64_XSDTYPE;
-		case QuestionDef.QTN_TYPE_BARCODE:
-			return STRING_XSDTYPE;
-		case QuestionDef.QTN_TYPE_BOOLEAN:
-			return BOOLEAN_XSDTYPE;
-		case QuestionDef.QTN_TYPE_DATE:
-			return DATE_XSDTYPE;
-		case QuestionDef.QTN_TYPE_DATE_TIME:
-			return DATETIME_XSDTYPE;
-		case QuestionDef.QTN_TYPE_DECIMAL:
-			return DECIMAL_XSDTYPE;
-		case QuestionDef.QTN_TYPE_GPS:
-			return STRING_XSDTYPE;
-		case QuestionDef.QTN_TYPE_IMAGE:
-			return BASE64_XSDTYPE;
-		case QuestionDef.QTN_TYPE_LIST_EXCLUSIVE:
-		case QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC:
-		case QuestionDef.QTN_TYPE_LIST_MULTIPLE:
-			return STRING_XSDTYPE;
-		case QuestionDef.QTN_TYPE_NUMERIC:
-			return INTEGER_XSDTYPE;
-		case QuestionDef.QTN_TYPE_PHONENUMBER:
-			return STRING_XSDTYPE;
-		case QuestionDef.QTN_TYPE_TEXT:
-			return STRING_XSDTYPE;
-		case QuestionDef.QTN_TYPE_TIME:
-			return TIME_XDSTYPE;
-		case QuestionDef.QTN_TYPE_VIDEO:
-			return BASE64_XSDTYPE;
-		default:
-			return null;
-		}
-	}
-
-	public static String questionTypeToMediaType(byte type) {
-		switch (type) {
-		case QuestionDef.QTN_TYPE_AUDIO:
-			return "audio/*";
-		case QuestionDef.QTN_TYPE_VIDEO:
-			return "video/*";
-		case QuestionDef.QTN_TYPE_IMAGE:
-			return "image/*";
-		default:
-			return null;
-		}
-	}
-
-	public static boolean questionTypeGeneratesBindFormat(byte type) {
-		return questionTypeToFormat(type) != null;
-	}
-
-	public static String questionTypeToFormat(byte type) {
-		switch (type) {
-		case QuestionDef.QTN_TYPE_AUDIO:
-			return AUDIO_BINDFORMAT;
-		case QuestionDef.QTN_TYPE_VIDEO:
-			return VIDEO_BINDFORMAT;
-		case QuestionDef.QTN_TYPE_IMAGE:
-			return IMAGE_BINDFORMAT;
-		case QuestionDef.QTN_TYPE_GPS:
-			return GPS_BINDFORMAT;
-		case QuestionDef.QTN_TYPE_PHONENUMBER:
-			return PHONENUMBER_BINDFORMAT;
-		default:
-			return null;
-		}
-	}
-
-	public static boolean questionTypeGeneratesBoundInput(byte type) {
-		switch (type) {
-		case QuestionDef.QTN_TYPE_AUDIO:
-		case QuestionDef.QTN_TYPE_VIDEO:
-		case QuestionDef.QTN_TYPE_IMAGE:
-		case QuestionDef.QTN_TYPE_LIST_EXCLUSIVE:
-		case QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC:
-		case QuestionDef.QTN_TYPE_LIST_MULTIPLE:
-		case QuestionDef.QTN_TYPE_REPEAT:
-			return false;
-		default:
-			return true;
-		}
-	}
-
-	public static boolean questionTypeGeneratesBoundUpload(byte type) {
-		switch (type) {
-		case QuestionDef.QTN_TYPE_AUDIO:
-		case QuestionDef.QTN_TYPE_VIDEO:
-		case QuestionDef.QTN_TYPE_IMAGE:
-			return true;
-		default:
-			return false;
-		}
-	}
-
-	public static boolean questionGeneratesValidationRule(FormDef form,
-			QuestionDef question) {
-		return form.getValidationRule(question.getId()) != null;
 	}
 }
