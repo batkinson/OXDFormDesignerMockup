@@ -513,7 +513,10 @@ public class ModelToXML {
 			else
 				qPath = form.getQuestion(c.getQuestionId()).getVariableName();
 
-			buf.append(qPath);
+			if (c.getFunction() == EpihandyConstants.FUNCTION_LENGTH)
+				buf.append(MessageFormat.format("length({0})", qPath));
+			else
+				buf.append(qPath);
 			buf.append(' ');
 			buf.append(opTypeToString(c.getOperator()));
 			buf.append(' ');

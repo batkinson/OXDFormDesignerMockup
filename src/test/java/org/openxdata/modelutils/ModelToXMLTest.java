@@ -285,7 +285,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
-	public void testValidationConverstion() throws Exception {
+	public void testValidationConversion() throws Exception {
 		String matchPattern = "count(//xf:bind[@id=''{0}'' and @constraint=''{1}'' and @message=''{2}''])";
 		String[][] matchParams = {
 				{ "birthdate", ". <= today()", "Cannot be greater than today" },
@@ -293,7 +293,9 @@ public class ModelToXMLTest extends TestCase {
 						"Should be between 0 and 200 inclusive" },
 				{ "height", ". >= 1 and . >= 20",
 						"Should be between 1 and 20 inclusive" },
-				{ "nokids", ". >= 0 and . < 100", "Should be between 0 and 100" } };
+				{ "nokids", ". >= 0 and . < 100", "Should be between 0 and 100" },
+				{ "kid", "length(.) = patientreg/nokids",
+						"Kid rows should be equal to the number of kids" }, };
 
 		for (String[] matchParam : matchParams) {
 			convertedStream.reset(); // Restore stream state
