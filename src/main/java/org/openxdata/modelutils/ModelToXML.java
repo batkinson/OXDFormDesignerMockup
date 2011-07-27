@@ -64,8 +64,8 @@ public class ModelToXML {
 		buf.append("\t<xf:model>\n");
 		generateMainInstance(qTree, buf);
 		buf.append('\n');
-		generateDynListInstances(formDef, buf, dynOptDepMap);
-		generateBindings(formDef, buf, skipRulesByTarget);
+		generateDynListInstances(qTree, dynOptDepMap, buf);
+		generateBindings(qTree, skipRulesByTarget, buf);
 		buf.append("\t</xf:model>\n");
 		generateControls(qTree, dynOptDepMap, buf);
 		buf.append("</xf:xforms>\n");
@@ -245,24 +245,29 @@ public class ModelToXML {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private static void generateBindings(FormDef formDef, StringBuilder buf,
-			Map<Short, Set<SkipRule>> skipRulesByTarget) {
-		for (PageDef p : (Vector<PageDef>) formDef.getPages())
-			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
-				String[] tree = q.getVariableName().split("/\\s*");
+	private static void generateBindings(QuestionTree questionTree,
+			Map<Short, Set<SkipRule>> skipRulesByTarget, StringBuilder buf) {
 
-				boolean generateBind = questionTypeGeneratesBind(q.getType());
-				boolean generateType = q.getType() != QuestionDef.QTN_TYPE_REPEAT;
-				boolean generateFormat = questionTypeGeneratesBindFormat(q
+		FormDef formDef = questionTree.getFormDef();
+
+		if (!questionTree.isLeaf()) {
+			for (QuestionTree childTree : questionTree.getChildren()) {
+
+				QuestionDef question = childTree.getQuestion();
+				String[] tree = question.getVariableName().split("/\\s*");
+
+				boolean generateBind = questionTypeGeneratesBind(question
+						.getType());
+				boolean generateType = question.getType() != QuestionDef.QTN_TYPE_REPEAT;
+				boolean generateFormat = questionTypeGeneratesBindFormat(question
 						.getType());
 				boolean generateValidation = questionGeneratesValidationRule(
-						formDef, q);
-				boolean generateRelevant = skipRulesByTarget.containsKey(q
-						.getId());
-				boolean generateRequired = q.isMandatory()
-						|| (generateRelevant && !q.isMandatory());
-				boolean generateReadonly = !q.isEnabled();
+						formDef, question);
+				boolean generateRelevant = skipRulesByTarget
+						.containsKey(question.getId());
+				boolean generateRequired = question.isMandatory()
+						|| (generateRelevant && !question.isMandatory());
+				boolean generateReadonly = !question.isEnabled();
 
 				String qid = tree[tree.length - 1];
 
@@ -273,20 +278,21 @@ public class ModelToXML {
 					List<Object> bindArgs = new ArrayList<Object>();
 
 					bindArgs.add(qid);
-					bindArgs.add(q.getVariableName());
+					bindArgs.add(question.getVariableName());
 
 					if (generateType) {
 						bindBuf.append(" type=\"{");
 						bindBuf.append(bindArgs.size());
 						bindBuf.append("}\"");
-						bindArgs.add(questionTypeToSchemaType(q.getType()));
+						bindArgs.add(questionTypeToSchemaType(question
+								.getType()));
 					}
 
 					if (generateFormat) {
 						bindBuf.append(" format=\"{");
 						bindBuf.append(bindArgs.size());
 						bindBuf.append("}\"");
-						bindArgs.add(questionTypeToFormat(q.getType()));
+						bindArgs.add(questionTypeToFormat(question.getType()));
 					}
 
 					if (generateValidation) {
@@ -295,8 +301,8 @@ public class ModelToXML {
 						bindBuf.append("}\" message=\"{");
 						bindBuf.append(bindArgs.size() + 1);
 						bindBuf.append("}\"");
-						ValidationRule vRule = formDef.getValidationRule(q
-								.getId());
+						ValidationRule vRule = formDef
+								.getValidationRule(question.getId());
 						String constraint = buildConstraintFromRule(formDef,
 								vRule);
 						bindArgs.add(constraint);
@@ -309,10 +315,10 @@ public class ModelToXML {
 						bindBuf.append("}\" action=\"{");
 						bindBuf.append(bindArgs.size() + 1);
 						bindBuf.append("}\"");
-						Set<SkipRule> skipRules = skipRulesByTarget.get(q
-								.getId());
+						Set<SkipRule> skipRules = skipRulesByTarget
+								.get(question.getId());
 						String constraint = buildSkipRuleLogic(formDef,
-								skipRules, q);
+								skipRules, question);
 						Object lastRule = skipRules.toArray()[skipRules.size() - 1];
 						String action = buildAction(((SkipRule) lastRule)
 								.getAction());
@@ -324,14 +330,14 @@ public class ModelToXML {
 						bindBuf.append(" required=\"{");
 						bindBuf.append(bindArgs.size());
 						bindBuf.append("}()\"");
-						bindArgs.add(q.isMandatory());
+						bindArgs.add(question.isMandatory());
 					}
 
 					if (generateReadonly) {
 						bindBuf.append(" readonly=\"{");
 						bindBuf.append(bindArgs.size());
 						bindBuf.append("}()\"");
-						bindArgs.add(!q.isEnabled());
+						bindArgs.add(!question.isEnabled());
 					}
 
 					bindBuf.append("/>");
@@ -340,21 +346,29 @@ public class ModelToXML {
 					buf.append('\n');
 				}
 			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void generateDynListInstances(FormDef formDef,
-			StringBuilder buf, Map<Short, QuestionDef> dynOptDepMap) {
-		for (PageDef p : (Vector<PageDef>) formDef.getPages())
-			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
-				byte qType = q.getType();
-				String qId = getIdFromVarName(q.getVariableName());
+	private static void generateDynListInstances(QuestionTree questionTree,
+			Map<Short, QuestionDef> dynOptDepMap, StringBuilder buf) {
+
+		FormDef formDef = questionTree.getFormDef();
+
+		if (!questionTree.isLeaf()) {
+			for (QuestionTree childTree : questionTree.getChildren()) {
+
+				QuestionDef question = childTree.getQuestion();
+				byte qType = question.getType();
+				String qId = getIdFromVarName(question.getVariableName());
+
 				if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
 					String instanceDef = MessageFormat.format(
 							"\t\t<xf:instance id=''{0}''>\n", qId);
 					buf.append(instanceDef);
 					buf.append("\t\t\t<dynamiclist>\n");
-					QuestionDef parentQuestion = dynOptDepMap.get(q.getId());
+					QuestionDef parentQuestion = dynOptDepMap.get(question
+							.getId());
 					QuestionDef parentParentQuestion = dynOptDepMap
 							.get(parentQuestion.getId());
 					Map<Short, OptionDef> possibleParentValues = getPossibleValues(
@@ -380,6 +394,7 @@ public class ModelToXML {
 					buf.append("\t\t</xf:instance>\n");
 				}
 			}
+		}
 	}
 
 	private static void generateMainInstance(QuestionTree rootTree,
