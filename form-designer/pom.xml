@@ -2,85 +2,58 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.openxdata</groupId>
+		<artifactId>form-designer-parent</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
 	<groupId>org.openxdata</groupId>
 	<artifactId>form-designer</artifactId>
 	<packaging>jar</packaging>
 	<version>1.0-SNAPSHOT</version>
-	<name>OpenXdata Form Designer</name>
-	<url>http://openxdata.org</url>
+	<name>OpenXdata Form Designer - App</name>
 	<description>
-		An embeddable xforms form designer for use with openxdata.
+		An Apache Pivot based implementation of a form designer.
 	</description>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.pivot</groupId>
 			<artifactId>pivot-core</artifactId>
-			<version>${pivot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.pivot</groupId>
 			<artifactId>pivot-wtk</artifactId>
-			<version>${pivot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.pivot</groupId>
 			<artifactId>pivot-web</artifactId>
-			<version>${pivot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.pivot</groupId>
 			<artifactId>pivot-wtk-terra</artifactId>
-			<version>${pivot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.pivot</groupId>
 			<artifactId>pivot-charts</artifactId>
-			<version>${pivot.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openxdata</groupId>
 			<artifactId>epihandy-xforms-server</artifactId>
-			<version>0.9.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openxdata</groupId>
 			<artifactId>model-utils</artifactId>
-			<version>1.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.6.1</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<repositories>
-		<repository>
-			<id>oxd-public</id>
-			<name>OpenXData Public Repository</name>
-			<url>http://nexus.openxdata.org/content/groups/public</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
-
-	<pluginRepositories>
-		<pluginRepository>
-			<id>oxd-public</id>
-			<name>OpenXData Public Repository</name>
-			<url>http://nexus.openxdata.org/content/groups/public</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-	</pluginRepositories>
 
 	<build>
 		<resources>
@@ -95,14 +68,6 @@
 			</resource>
 		</resources>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-				</configuration>
-			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>keytool-maven-plugin</artifactId>
@@ -205,8 +170,6 @@
 	</build>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<pivot.version>2.0</pivot.version>
 		<keystore.alias>oneoff</keystore.alias>
 		<keystore.location>${project.build.directory}/oneoff-keystore</keystore.location>
 		<keystore.password>oneoffpass</keystore.password>
