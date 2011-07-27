@@ -63,6 +63,23 @@ class QuestionTree {
 		return question;
 	}
 
+	public QuestionTree getTreeForQuestion(QuestionDef question) {
+		QuestionTree result = null;
+		if (!isRoot() && getQuestion().equals(question)) {
+			result = this;
+		} else if (!isLeaf()) {
+			for (QuestionTree childTree : getChildren()) {
+				QuestionTree childResult = childTree
+						.getTreeForQuestion(question);
+				if (childResult != null) {
+					result = childResult;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
 	public FormDef getFormDef() {
 		return form;
 	}

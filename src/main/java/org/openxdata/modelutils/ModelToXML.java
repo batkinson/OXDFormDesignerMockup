@@ -70,7 +70,7 @@ public class ModelToXML {
 		generateBindings(formDef, buf, skipRulesByTarget);
 		buf.append("\t</xf:model>");
 		buf.append('\n');
-		generateControls(formDef, buf, dynOptDepMap);
+		generateControls(qTree, dynOptDepMap, buf);
 		buf.append("</xf:xforms>");
 		buf.append('\n');
 
@@ -110,8 +110,11 @@ public class ModelToXML {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void generateControls(FormDef formDef, StringBuilder buf,
-			Map<Short, QuestionDef> dynOptDepMap) {
+	private static void generateControls(QuestionTree questionTree,
+			Map<Short, QuestionDef> dynOptDepMap, StringBuilder buf) {
+
+		FormDef formDef = questionTree.getFormDef();
+
 		for (PageDef p : (Vector<PageDef>) formDef.getPages()) {
 			buf.append(MessageFormat.format("\t<xf:group id=\"{0}\">",
 					p.getPageNo()));
@@ -121,104 +124,130 @@ public class ModelToXML {
 			buf.append('\n');
 
 			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
-
-				byte qType = q.getType();
-				String qPath = q.getVariableName();
-				String instancePath = "/" + formDef.getVariableName() + "/";
-				if (qPath.startsWith(instancePath))
-					qPath = qPath.substring(instancePath.length());
-				String qName = q.getText();
-				String[] tree = q.getVariableName().split("/\\s*");
-				String qId = tree[tree.length - 1];
-
-				if (qType == QuestionDef.QTN_TYPE_REPEAT) {
-					buf.append(MessageFormat.format(
-							"\t\t<xf:group id=\"{0}\">", qPath));
-					buf.append('\n');
-					buf.append(MessageFormat.format(
-							"\t\t\t<xf:label>{0}</xf:label>\n", qName));
-					buf.append(MessageFormat.format(
-							"\t\t\t<xf:repeat bind=\"{1}\">{0}</xf:repeat>",
-							qName, qId));
-					buf.append('\n');
-					buf.append("\t\t</xf:group>\n");
-				} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE) {
-					buf.append(MessageFormat.format(
-							"\t\t<xf:select1 bind=\"{0}\">", qId));
-					buf.append('\n');
-					buf.append(MessageFormat.format(
-							"\t\t\t<xf:label>{0}</xf:label>", qName));
-					buf.append('\n');
-					for (OptionDef opt : (Vector<OptionDef>) q.getOptions()) {
-						String optFormat = "<xf:item id=\"{0}\"><xf:label>{1}</xf:label><xf:value>{0}</xf:value></xf:item>";
-						String optDef = MessageFormat.format(optFormat,
-								opt.getVariableName(), opt.getText());
-						buf.append("\t\t\t");
-						buf.append(optDef);
-						buf.append('\n');
-					}
-					buf.append("\t\t</xf:select1>");
-					buf.append('\n');
-				} else if (qType == QuestionDef.QTN_TYPE_LIST_MULTIPLE) {
-					buf.append(MessageFormat.format(
-							"\t\t<xf:select bind=\"{0}\">", qId));
-					buf.append('\n');
-					buf.append(MessageFormat.format(
-							"\t\t\t<xf:label>{0}</xf:label>", qName));
-					buf.append('\n');
-					for (OptionDef opt : (Vector<OptionDef>) q.getOptions()) {
-						String optFormat = "<xf:item id=\"{0}\"><xf:label>{1}</xf:label><xf:value>{0}</xf:value></xf:item>";
-						String optDef = MessageFormat.format(optFormat,
-								opt.getVariableName(), opt.getText());
-						buf.append("\t\t\t");
-						buf.append(optDef);
-						buf.append('\n');
-					}
-					buf.append("\t\t</xf:select>");
-					buf.append('\n');
-				} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
-					buf.append(MessageFormat.format(
-							"\t\t<xf:select1 bind=\"{0}\">", qId));
-					buf.append('\n');
-					buf.append(MessageFormat.format(
-							"\t\t\t<xf:label>{0}</xf:label>", qName));
-					buf.append('\n');
-					QuestionDef parentQuestion = dynOptDepMap.get(q.getId());
-					String[] parentTree = parentQuestion.getVariableName()
-							.split("/\\s*");
-					String parentId = parentTree[parentTree.length - 1];
-					String itemsetFormat = "\t\t\t<xf:itemset nodeset=\"instance(''{1}'')/item[@parent=instance(''{0}'')/{2}]\"><xf:label ref=\"label\"/><xf:value ref=\"value\"/></xf:itemset>\n";
-					String itemsetDef = MessageFormat.format(itemsetFormat,
-							tree[1], qId, parentId);
-					buf.append(itemsetDef);
-					buf.append("\t\t</xf:select1>");
-					buf.append('\n');
-				} else if (questionTypeGeneratesBoundInput(qType)) {
-					buf.append(MessageFormat.format(
-							"\t\t<xf:input bind=\"{0}\">", qId));
-					buf.append('\n');
-					buf.append(MessageFormat.format(
-							"\t\t\t<xf:label>{0}</xf:label>", qName));
-					buf.append('\n');
-					buf.append("\t\t</xf:input>");
-					buf.append('\n');
-				} else if (questionTypeGeneratesBoundUpload(qType)) {
-					String mediaType = questionTypeToMediaType(qType);
-					buf.append(MessageFormat.format(
-							"\t\t<xf:upload bind=\"{0}\" mediatype=\"{1}\">",
-							qId, mediaType));
-					buf.append('\n');
-					buf.append(MessageFormat.format(
-							"\t\t\t<xf:label>{0}</xf:label>", qName));
-					buf.append('\n');
-					buf.append("\t\t</xf:upload>");
-					buf.append('\n');
-				}
+				QuestionTree qTree = questionTree.getTreeForQuestion(q);
+				generateQuestionControl(qTree, dynOptDepMap, buf);
 			}
 
 			buf.append('\n');
 			buf.append("\t</xf:group>");
 			buf.append('\n');
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void generateQuestionControl(QuestionTree questionTree,
+			Map<Short, QuestionDef> dynOptDepMap, StringBuilder buf) {
+
+		FormDef formDef = questionTree.getFormDef();
+		QuestionDef q = questionTree.getQuestion();
+		String instancePath = "/" + formDef.getVariableName() + "/";
+		byte qType = q.getType();
+		String qPath = q.getVariableName();
+		if (qPath.startsWith(instancePath))
+			qPath = qPath.substring(instancePath.length());
+		String qName = q.getText();
+		String[] tree = q.getVariableName().split("/\\s*");
+		String qId = tree[tree.length - 1];
+
+		int qDepth = questionTree.getDepth();
+
+		// Build pad based on question depth
+		StringBuilder qPad = new StringBuilder("\t\t");
+		for (int i = 1; i < qDepth; i++)
+			qPad.append('\t');
+
+		boolean qNested = qDepth > 1;
+
+		if (qType == QuestionDef.QTN_TYPE_REPEAT) {
+			buf.append(MessageFormat.format("{0}<xf:group id=\"{1}\">", qPad,
+					qPath));
+			buf.append('\n');
+			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
+					qPad, qName));
+			buf.append(MessageFormat.format("{0}\t<xf:repeat bind=\"{2}\">\n",
+					qPad, qName, qId));
+			for (QuestionTree childTree : questionTree.getChildren())
+				generateQuestionControl(childTree, dynOptDepMap, buf);
+			buf.append(MessageFormat.format(
+					"{0}\t</xf:repeat>\n{0}</xf:group>\n", qPad));
+		} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE) {
+			if (!qNested)
+				buf.append(MessageFormat.format(
+						"{0}<xf:select1 bind=\"{1}\">\n", qPad, qId));
+			else
+				buf.append(MessageFormat.format(
+						"{0}<xf:select1 ref=\"{1}\" type=\"{2}\">\n", qPad,
+						qId, questionTypeToSchemaType(qType)));
+			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
+					qPad, qName));
+			for (OptionDef opt : (Vector<OptionDef>) q.getOptions()) {
+				String optFormat = "{0}\t<xf:item id=\"{1}\"><xf:label>{2}</xf:label><xf:value>{1}</xf:value></xf:item>\n";
+				String optDef = MessageFormat.format(optFormat, qPad,
+						opt.getVariableName(), opt.getText());
+				buf.append(optDef);
+			}
+			buf.append(MessageFormat.format("{0}</xf:select1>\n", qPad));
+		} else if (qType == QuestionDef.QTN_TYPE_LIST_MULTIPLE) {
+			if (!qNested)
+				buf.append(MessageFormat.format(
+						"{0}<xf:select bind=\"{1}\">\n", qPad, qId));
+			else
+				buf.append(MessageFormat.format(
+						"{0}<xf:select ref=\"{1}\" type=\"{2}\">\n", qPad, qId,
+						questionTypeToSchemaType(qType)));
+			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
+					qPad, qName));
+			for (OptionDef opt : (Vector<OptionDef>) q.getOptions()) {
+				String optFormat = "{0}\t<xf:item id=\"{1}\"><xf:label>{2}</xf:label><xf:value>{1}</xf:value></xf:item>\n";
+				String optDef = MessageFormat.format(optFormat, qPad,
+						opt.getVariableName(), opt.getText());
+				buf.append(optDef);
+			}
+			buf.append(MessageFormat.format("{0}</xf:select>\n", qPad));
+		} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
+			if (!qNested)
+				buf.append(MessageFormat.format(
+						"{0}<xf:select1 bind=\"{1}\">\n", qPad, qId));
+			else
+				buf.append(MessageFormat.format(
+						"{0}<xf:select1 ref=\"{1}\" type=\"{2}\">\n", qPad,
+						qId, questionTypeToSchemaType(qType)));
+			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
+					qPad, qName));
+			QuestionDef parentQuestion = dynOptDepMap.get(q.getId());
+			String[] parentTree = parentQuestion.getVariableName().split(
+					"/\\s*");
+			String parentId = parentTree[parentTree.length - 1];
+			String itemsetFormat = "{0}\t<xf:itemset nodeset=\"instance(''{2}'')/item[@parent=instance(''{1}'')/{3}]\"><xf:label ref=\"label\"/><xf:value ref=\"value\"/></xf:itemset>\n";
+			String itemsetDef = MessageFormat.format(itemsetFormat, qPad,
+					tree[1], qId, parentId);
+			buf.append(itemsetDef);
+			buf.append(MessageFormat.format("{0}</xf:select1>\n", qPad));
+		} else if (questionTypeGeneratesBoundInput(qType)) {
+			if (!qNested)
+				buf.append(MessageFormat.format("{0}<xf:input bind=\"{1}\">\n",
+						qPad, qId));
+			else
+				buf.append(MessageFormat.format(
+						"{0}<xf:input ref=\"{1}\" type=\"{2}\">\n", qPad, qId,
+						questionTypeToSchemaType(qType)));
+			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
+					qPad, qName));
+			buf.append(MessageFormat.format("{0}</xf:input>\n", qPad));
+		} else if (questionTypeGeneratesBoundUpload(qType)) {
+			String mediaType = questionTypeToMediaType(qType);
+			if (!qNested)
+				buf.append(MessageFormat.format(
+						"{0}<xf:upload bind=\"{1}\" mediatype=\"{2}\">\n",
+						qPad, qId, mediaType));
+			else
+				buf.append(MessageFormat
+						.format("{0}<xf:upload ref=\"{1}\" type=\"{2}\" mediatype=\"{3}\">\n",
+								qPad, qId, questionTypeToSchemaType(qType),
+								mediaType));
+			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
+					qPad, qName));
+			buf.append(MessageFormat.format("{0}</xf:upload>\n", qPad));
 		}
 	}
 

@@ -370,4 +370,22 @@ public class ModelToXMLTest extends TestCase {
 					matchCount.intValue());
 		}
 	}
+
+	public void testNestedControlConversion() throws Exception {
+		String matchPattern = "count(//xf:group[@id=''kids/kid'']/xf:repeat/xf:{0}[@ref=''{1}'' and @type=''{2}''])";
+		String[][] matchParams = { { "input", "kidname", "xsd:string" },
+				{ "select1", "kidsex", "xsd:string" },
+				{ "input", "kidage", "xsd:int" } };
+
+		for (String[] matchParam : matchParams) {
+			convertedStream.reset(); // Restore stream state
+			String expr = MessageFormat.format(matchPattern,
+					(Object[]) matchParam);
+			XPathExpression compiledExpr = xpath.compile(expr);
+			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
+					XPathConstants.NUMBER);
+			assertEquals(expr + " nested control not present ", 1,
+					matchCount.intValue());
+		}
+	}
 }
