@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.fcitmuk.epihandy.Condition;
 import org.fcitmuk.epihandy.DynamicOptionDef;
 import org.fcitmuk.epihandy.EpihandyConstants;
@@ -58,21 +59,16 @@ public class ModelToXML {
 		Map<Short, QuestionDef> dynOptDepMap = getDynOptDepMap(formDef);
 
 		// Output xform header and beginning of model declaration
-		buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>");
-		buf.append('\n');
-		buf.append("<xf:xforms xmlns:xf=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">");
-		buf.append('\n');
-		buf.append("\t<xf:model>");
-		buf.append('\n');
+		buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n");
+		buf.append("<xf:xforms xmlns:xf=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\n");
+		buf.append("\t<xf:model>\n");
 		generateMainInstance(qTree, buf);
 		buf.append('\n');
 		generateDynListInstances(formDef, buf, dynOptDepMap);
 		generateBindings(formDef, buf, skipRulesByTarget);
-		buf.append("\t</xf:model>");
-		buf.append('\n');
+		buf.append("\t</xf:model>\n");
 		generateControls(qTree, dynOptDepMap, buf);
-		buf.append("</xf:xforms>");
-		buf.append('\n');
+		buf.append("</xf:xforms>\n");
 
 		if (log.isDebugEnabled())
 			log.debug("converted form:\n" + buf.toString());
@@ -121,7 +117,7 @@ public class ModelToXML {
 			buf.append(MessageFormat.format("\t<xf:group id=\"{0}\">\n",
 					p.getPageNo()));
 			buf.append(MessageFormat.format("\t\t<xf:label>{0}</xf:label>\n",
-					p.getName()));
+					StringEscapeUtils.escapeXml(p.getName())));
 			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
 				QuestionTree qTree = questionTree.getTreeForQuestion(q);
 				generateQuestionControl(qTree, dynOptDepMap, buf);
@@ -159,7 +155,7 @@ public class ModelToXML {
 					qPath));
 			buf.append('\n');
 			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
+					qPad, StringEscapeUtils.escapeXml(qName)));
 			buf.append(MessageFormat.format("{0}\t<xf:repeat bind=\"{2}\">\n",
 					qPad, qName, qId));
 			for (QuestionTree childTree : questionTree.getChildren())
@@ -175,11 +171,12 @@ public class ModelToXML {
 						"{0}<xf:select1 ref=\"{1}\" type=\"{2}\">\n", qPad,
 						qId, questionTypeToSchemaType(qType)));
 			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
+					qPad, StringEscapeUtils.escapeXml(qName)));
 			for (OptionDef opt : (Vector<OptionDef>) q.getOptions()) {
 				String optFormat = "{0}\t<xf:item id=\"{1}\"><xf:label>{2}</xf:label><xf:value>{1}</xf:value></xf:item>\n";
 				String optDef = MessageFormat.format(optFormat, qPad,
-						opt.getVariableName(), opt.getText());
+						opt.getVariableName(),
+						StringEscapeUtils.escapeXml(opt.getText()));
 				buf.append(optDef);
 			}
 			buf.append(MessageFormat.format("{0}</xf:select1>\n", qPad));
@@ -192,11 +189,12 @@ public class ModelToXML {
 						"{0}<xf:select ref=\"{1}\" type=\"{2}\">\n", qPad, qId,
 						questionTypeToSchemaType(qType)));
 			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
+					qPad, StringEscapeUtils.escapeXml(qName)));
 			for (OptionDef opt : (Vector<OptionDef>) q.getOptions()) {
 				String optFormat = "{0}\t<xf:item id=\"{1}\"><xf:label>{2}</xf:label><xf:value>{1}</xf:value></xf:item>\n";
 				String optDef = MessageFormat.format(optFormat, qPad,
-						opt.getVariableName(), opt.getText());
+						opt.getVariableName(),
+						StringEscapeUtils.escapeXml(opt.getText()));
 				buf.append(optDef);
 			}
 			buf.append(MessageFormat.format("{0}</xf:select>\n", qPad));
@@ -209,7 +207,7 @@ public class ModelToXML {
 						"{0}<xf:select1 ref=\"{1}\" type=\"{2}\">\n", qPad,
 						qId, questionTypeToSchemaType(qType)));
 			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
+					qPad, StringEscapeUtils.escapeXml(qName)));
 			QuestionDef parentQuestion = dynOptDepMap.get(q.getId());
 			String[] parentTree = parentQuestion.getVariableName().split(
 					"/\\s*");
@@ -228,7 +226,7 @@ public class ModelToXML {
 						"{0}<xf:input ref=\"{1}\" type=\"{2}\">\n", qPad, qId,
 						questionTypeToSchemaType(qType)));
 			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
+					qPad, StringEscapeUtils.escapeXml(qName)));
 			buf.append(MessageFormat.format("{0}</xf:input>\n", qPad));
 		} else if (questionTypeGeneratesBoundUpload(qType)) {
 			String mediaType = questionTypeToMediaType(qType);
@@ -242,7 +240,7 @@ public class ModelToXML {
 								qPad, qId, questionTypeToSchemaType(qType),
 								mediaType));
 			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
+					qPad, StringEscapeUtils.escapeXml(qName)));
 			buf.append(MessageFormat.format("{0}</xf:upload>\n", qPad));
 		}
 	}
@@ -370,9 +368,10 @@ public class ModelToXML {
 							OptionDef parentOption = possibleParentValues
 									.get(dynOptEntry.getKey());
 							String itemDef = MessageFormat.format(itemPattern,
-									option.getVariableName(),
-									parentOption.getVariableName(),
-									option.getText());
+									option.getVariableName(), parentOption
+											.getVariableName(),
+									StringEscapeUtils.escapeXml(option
+											.getText()));
 							buf.append(itemDef);
 						}
 					}
@@ -439,7 +438,7 @@ public class ModelToXML {
 			String defaultValue = question.getDefaultValue();
 			if (defaultValue != null && !"".equals(defaultValue))
 				buf.append(MessageFormat.format("<{0}>{1}</{0}>\n",
-						lastElement, defaultValue));
+						lastElement, StringEscapeUtils.escapeXml(defaultValue)));
 			else
 				buf.append(MessageFormat.format("<{0}/>\n", lastElement));
 		} else {
