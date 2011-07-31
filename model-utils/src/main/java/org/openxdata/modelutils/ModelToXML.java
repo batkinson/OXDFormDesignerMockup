@@ -46,6 +46,20 @@ public class ModelToXML {
 			b.append(PAD);
 	}
 
+	public static String convert(FormDef formDef, boolean useNamespaces) {
+		String result = convert(formDef);
+		if (!useNamespaces) {
+			// Total hack, stripping rather than generating without
+			result = result
+					.replace(
+							" xmlns:xf=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"",
+							"");
+			result = result.replaceAll("<xf:", "<");
+			result = result.replaceAll("</xf:", "</");
+		}
+		return result;
+	}
+
 	public static String convert(FormDef formDef) {
 		if (formDef == null)
 			throw new IllegalArgumentException("form def can not be null");

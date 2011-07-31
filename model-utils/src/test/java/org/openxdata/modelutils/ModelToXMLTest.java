@@ -393,4 +393,9 @@ public class ModelToXMLTest extends TestCase {
 					matchCount.intValue());
 		}
 	}
+
+	public void testNoNSConverstion() {
+		assertFalse("exported xml should not contain namespace prefixes",
+				ModelToXML.convert(sampleDef, false).contains("xf:"));
+	}
 }
