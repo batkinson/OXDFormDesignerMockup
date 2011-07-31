@@ -1,4 +1,4 @@
-package org.openxdata.designer.designtree;
+package org.openxdata.designer.dnd;
 
 import java.io.IOException;
 
@@ -12,7 +12,6 @@ import org.apache.pivot.wtk.Manifest;
 import org.apache.pivot.wtk.Point;
 import org.apache.pivot.wtk.TreeView;
 import org.openxdata.designer.DesignerApp;
-import org.openxdata.designer.DropPolicy;
 
 public class DropTarget implements org.apache.pivot.wtk.DropTarget {
 

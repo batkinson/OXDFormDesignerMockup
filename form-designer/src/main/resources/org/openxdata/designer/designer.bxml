@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Window title="%title" maximized="true"
 	xmlns:bxml="http://pivot.apache.org/bxml"
+	xmlns:dnd="org.openxdata.designer.dnd"
 	xmlns:content="org.apache.pivot.wtk.content"
 	xmlns:formtree="org.openxdata.designer.formtree"
 	xmlns:designtree="org.openxdata.designer.designtree"
@@ -14,8 +15,8 @@
 		<bxml:include bxml:id="dynamicOptionDialog" src="dynamicOptionDialog.bxml" inline="true" />
 		<bxml:include bxml:id="skipRuleDialog" src="skipRuleDialog.bxml" />
 		<bxml:include bxml:id="validationRuleDialog" src="validationRuleDialog.bxml" />
-		<designtree:DragSource bxml:id="dragSource" />
-		<designtree:DropTarget bxml:id="dropTarget" application="$application" />
+		<dnd:DragSource bxml:id="dragSource" />
+		<dnd:DropTarget bxml:id="dropTarget" application="$application" />
 	</bxml:define>
 	
 	<TabPane bxml:id="tabPane">

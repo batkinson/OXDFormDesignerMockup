@@ -1,4 +1,4 @@
-package org.openxdata.designer.designtree;
+package org.openxdata.designer.dnd;
 
 import org.apache.pivot.wtk.Component;
 import org.apache.pivot.wtk.DropAction;

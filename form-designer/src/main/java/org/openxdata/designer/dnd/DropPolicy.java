@@ -1,4 +1,4 @@
-package org.openxdata.designer;
+package org.openxdata.designer.dnd;
 
 import org.apache.pivot.collections.List;
 import org.apache.pivot.collections.Sequence;
