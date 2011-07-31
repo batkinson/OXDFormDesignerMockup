@@ -39,6 +39,13 @@ public class ModelToXML {
 
 	private static Logger log = LoggerFactory.getLogger(ModelToXML.class);
 
+	private static String PAD = "    ";
+
+	private static void indent(StringBuilder b, int depth) {
+		for (int i = 0; i < depth; i++)
+			b.append(PAD);
+	}
+
 	public static String convert(FormDef formDef) {
 		if (formDef == null)
 			throw new IllegalArgumentException("form def can not be null");
@@ -56,12 +63,14 @@ public class ModelToXML {
 		// Output xform header and beginning of model declaration
 		buf.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n");
 		buf.append("<xf:xforms xmlns:xf=\"http://www.w3.org/2002/xforms\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\n");
-		buf.append("\t<xf:model>\n");
+		indent(buf, 1);
+		buf.append("<xf:model>\n");
 		generateMainInstance(qTree, buf);
 		buf.append('\n');
 		generateDynListInstances(qTree, dynOptDepMap, buf);
 		generateBindings(qTree, skipRulesByTarget, buf);
-		buf.append("\t</xf:model>\n");
+		indent(buf, 1);
+		buf.append("</xf:model>\n");
 		generateControls(qTree, dynOptDepMap, buf);
 		buf.append("</xf:xforms>\n");
 
@@ -80,15 +89,18 @@ public class ModelToXML {
 		FormDef formDef = questionTree.getFormDef();
 
 		for (PageDef p : (Vector<PageDef>) formDef.getPages()) {
-			buf.append(MessageFormat.format("\t<xf:group id=\"{0}\">\n",
+			indent(buf, 1);
+			buf.append(MessageFormat.format("<xf:group id=\"{0}\">\n",
 					p.getPageNo()));
-			buf.append(MessageFormat.format("\t\t<xf:label>{0}</xf:label>\n",
+			indent(buf, 2);
+			buf.append(MessageFormat.format("<xf:label>{0}</xf:label>\n",
 					StringEscapeUtils.escapeXml(p.getName())));
 			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
 				QuestionTree qTree = questionTree.getTreeForQuestion(q);
 				generateQuestionControl(qTree, dynOptDepMap, buf);
 			}
-			buf.append("\t</xf:group>\n");
+			indent(buf, 1);
+			buf.append("</xf:group>\n");
 		}
 	}
 
@@ -109,105 +121,122 @@ public class ModelToXML {
 		String qId = getIdFromVarName(question.getVariableName());
 		Short qIdNum = question.getId();
 		int qDepth = questionTree.getDepth();
-
-		// Build pad based on question depth
-		StringBuilder qPad = new StringBuilder("\t\t");
-		for (int i = 1; i < qDepth; i++)
-			qPad.append('\t');
+		int ilen = 1 + qDepth;
 
 		boolean qNested = qDepth > 1;
 
 		if (qType == QuestionDef.QTN_TYPE_REPEAT) {
-			buf.append(MessageFormat.format("{0}<xf:group id=\"{1}\">", qPad,
-					qBindVar));
+			indent(buf, ilen);
+			buf.append(MessageFormat.format("<xf:group id=\"{0}\">", qBindVar));
 			buf.append('\n');
-			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
-			buf.append(MessageFormat.format("{0}\t<xf:repeat bind=\"{1}\">\n",
-					qPad, qId));
+			indent(buf, ilen + 1);
+			buf.append(MessageFormat
+					.format("<xf:label>{0}</xf:label>\n", qName));
+			indent(buf, ilen + 1);
+			buf.append(MessageFormat.format("<xf:repeat bind=\"{0}\">\n", qId));
 			for (QuestionTree childTree : questionTree.getChildren())
 				generateQuestionControl(childTree, dynOptDepMap, buf);
-			buf.append(MessageFormat.format(
-					"{0}\t</xf:repeat>\n{0}</xf:group>\n", qPad));
+			indent(buf, ilen + 1);
+			buf.append("</xf:repeat>\n");
+			indent(buf, ilen);
+			buf.append("</xf:group>\n");
 		} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE) {
-			if (!qNested)
+			indent(buf, ilen);
+			if (!qNested) {
+				buf.append(MessageFormat.format("<xf:select1 bind=\"{0}\">\n",
+						qId));
+			} else {
 				buf.append(MessageFormat.format(
-						"{0}<xf:select1 bind=\"{1}\">\n", qPad, qId));
-			else
-				buf.append(MessageFormat.format(
-						"{0}<xf:select1 ref=\"{1}\" type=\"{2}\">\n", qPad,
-						qId, questionTypeToSchemaType(qType)));
-			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
-			for (OptionDef opt : (Vector<OptionDef>) question.getOptions()) {
-				String optFormat = "{0}\t<xf:item id=\"{1}\"><xf:label>{2}</xf:label><xf:value>{1}</xf:value></xf:item>\n";
-				String optDef = MessageFormat.format(optFormat, qPad,
-						opt.getVariableName(),
-						StringEscapeUtils.escapeXml(opt.getText()));
-				buf.append(optDef);
-			}
-			buf.append(MessageFormat.format("{0}</xf:select1>\n", qPad));
-		} else if (qType == QuestionDef.QTN_TYPE_LIST_MULTIPLE) {
-			if (!qNested)
-				buf.append(MessageFormat.format(
-						"{0}<xf:select bind=\"{1}\">\n", qPad, qId));
-			else
-				buf.append(MessageFormat.format(
-						"{0}<xf:select ref=\"{1}\" type=\"{2}\">\n", qPad, qId,
+						"<xf:select1 ref=\"{0}\" type=\"{1}\">\n", qId,
 						questionTypeToSchemaType(qType)));
-			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
+			}
+			indent(buf, ilen + 1);
+			buf.append(MessageFormat
+					.format("<xf:label>{0}</xf:label>\n", qName));
 			for (OptionDef opt : (Vector<OptionDef>) question.getOptions()) {
-				String optFormat = "{0}\t<xf:item id=\"{1}\"><xf:label>{2}</xf:label><xf:value>{1}</xf:value></xf:item>\n";
-				String optDef = MessageFormat.format(optFormat, qPad,
+				String optFormat = "<xf:item id=\"{0}\"><xf:label>{1}</xf:label><xf:value>{0}</xf:value></xf:item>\n";
+				String optDef = MessageFormat.format(optFormat,
 						opt.getVariableName(),
 						StringEscapeUtils.escapeXml(opt.getText()));
+				indent(buf, ilen + 1);
 				buf.append(optDef);
 			}
-			buf.append(MessageFormat.format("{0}</xf:select>\n", qPad));
-		} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
+			indent(buf, ilen);
+			buf.append("</xf:select1>\n");
+		} else if (qType == QuestionDef.QTN_TYPE_LIST_MULTIPLE) {
+			indent(buf, ilen);
 			if (!qNested)
-				buf.append(MessageFormat.format(
-						"{0}<xf:select1 bind=\"{1}\">\n", qPad, qId));
+				buf.append(MessageFormat.format("<xf:select bind=\"{0}\">\n",
+						qId));
 			else
 				buf.append(MessageFormat.format(
-						"{0}<xf:select1 ref=\"{1}\" type=\"{2}\">\n", qPad,
-						qId, questionTypeToSchemaType(qType)));
-			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
+						"<xf:select ref=\"{0}\" type=\"{1}\">\n", qId,
+						questionTypeToSchemaType(qType)));
+			indent(buf, ilen + 1);
+			buf.append(MessageFormat
+					.format("<xf:label>{0}</xf:label>\n", qName));
+			for (OptionDef opt : (Vector<OptionDef>) question.getOptions()) {
+				String optFormat = "<xf:item id=\"{0}\"><xf:label>{1}</xf:label><xf:value>{0}</xf:value></xf:item>\n";
+				String optDef = MessageFormat.format(optFormat,
+						opt.getVariableName(),
+						StringEscapeUtils.escapeXml(opt.getText()));
+				indent(buf, ilen + 1);
+				buf.append(optDef);
+			}
+			indent(buf, ilen);
+			buf.append("</xf:select>\n");
+		} else if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
+			indent(buf, ilen);
+			if (!qNested)
+				buf.append(MessageFormat.format("<xf:select1 bind=\"{0}\">\n",
+						qId));
+			else
+				buf.append(MessageFormat.format(
+						"<xf:select1 ref=\"{0}\" type=\"{1}\">\n", qId,
+						questionTypeToSchemaType(qType)));
+			indent(buf, ilen + 1);
+			buf.append(MessageFormat
+					.format("<xf:label>{0}</xf:label>\n", qName));
 			QuestionDef parentQuestion = dynOptDepMap.get(qIdNum);
 			String parentId = getIdFromVarName(parentQuestion.getVariableName());
-			String itemsetFormat = "{0}\t<xf:itemset nodeset=\"instance(''{2}'')/item[@parent=instance(''{1}'')/{3}]\"><xf:label ref=\"label\"/><xf:value ref=\"value\"/></xf:itemset>\n";
+			String itemsetFormat = "<xf:itemset nodeset=\"instance(''{1}'')/item[@parent=instance(''{0}'')/{2}]\"><xf:label ref=\"label\"/><xf:value ref=\"value\"/></xf:itemset>\n";
 			String instanceId = qPath[1];
-			String itemsetDef = MessageFormat.format(itemsetFormat, qPad,
-					instanceId, qId, parentId);
+			indent(buf, ilen + 1);
+			String itemsetDef = MessageFormat.format(itemsetFormat, instanceId,
+					qId, parentId);
 			buf.append(itemsetDef);
-			buf.append(MessageFormat.format("{0}</xf:select1>\n", qPad));
+			indent(buf, ilen);
+			buf.append("</xf:select1>\n");
 		} else if (questionTypeGeneratesBoundInput(qType)) {
+			indent(buf, ilen);
 			if (!qNested)
-				buf.append(MessageFormat.format("{0}<xf:input bind=\"{1}\">\n",
-						qPad, qId));
+				buf.append(MessageFormat.format("<xf:input bind=\"{0}\">\n",
+						qId));
 			else
 				buf.append(MessageFormat.format(
-						"{0}<xf:input ref=\"{1}\" type=\"{2}\">\n", qPad, qId,
+						"<xf:input ref=\"{0}\" type=\"{1}\">\n", qId,
 						questionTypeToSchemaType(qType)));
-			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
-			buf.append(MessageFormat.format("{0}</xf:input>\n", qPad));
+			indent(buf, ilen + 1);
+			buf.append(MessageFormat
+					.format("<xf:label>{0}</xf:label>\n", qName));
+			indent(buf, ilen);
+			buf.append("</xf:input>\n");
 		} else if (questionTypeGeneratesBoundUpload(qType)) {
 			String mediaType = questionTypeToMediaType(qType);
+			indent(buf, ilen);
 			if (!qNested)
 				buf.append(MessageFormat.format(
-						"{0}<xf:upload bind=\"{1}\" mediatype=\"{2}\">\n",
-						qPad, qId, mediaType));
+						"<xf:upload bind=\"{0}\" mediatype=\"{1}\">\n", qId,
+						mediaType));
 			else
 				buf.append(MessageFormat
-						.format("{0}<xf:upload ref=\"{1}\" type=\"{2}\" mediatype=\"{3}\">\n",
-								qPad, qId, questionTypeToSchemaType(qType),
-								mediaType));
-			buf.append(MessageFormat.format("{0}\t<xf:label>{1}</xf:label>\n",
-					qPad, qName));
-			buf.append(MessageFormat.format("{0}</xf:upload>\n", qPad));
+						.format("<xf:upload ref=\"{0}\" type=\"{1}\" mediatype=\"{2}\">\n",
+								qId, questionTypeToSchemaType(qType), mediaType));
+			indent(buf, ilen + 1);
+			buf.append(MessageFormat
+					.format("<xf:label>{0}</xf:label>\n", qName));
+			indent(buf, ilen);
+			buf.append("</xf:upload>\n");
 		}
 	}
 
@@ -237,7 +266,7 @@ public class ModelToXML {
 				boolean generateReadonly = !question.isEnabled();
 
 				if (generateBind) {
-					buf.append("\t\t");
+					indent(buf, 2);
 					StringBuilder bindBuf = new StringBuilder(
 							"<xf:bind id=\"{0}\" nodeset=\"{1}\"");
 					List<Object> bindArgs = new ArrayList<Object>();
@@ -326,10 +355,12 @@ public class ModelToXML {
 				String qId = getIdFromVarName(question.getVariableName());
 
 				if (qType == QuestionDef.QTN_TYPE_LIST_EXCLUSIVE_DYNAMIC) {
+					indent(buf, 2);
 					String instanceDef = MessageFormat.format(
-							"\t\t<xf:instance id=''{0}''>\n", qId);
+							"<xf:instance id=''{0}''>\n", qId);
 					buf.append(instanceDef);
-					buf.append("\t\t\t<dynamiclist>\n");
+					indent(buf, 3);
+					buf.append("<dynamiclist>\n");
 					QuestionDef parentQuestion = dynOptDepMap.get(question
 							.getId());
 					QuestionDef parentParentQuestion = dynOptDepMap
@@ -341,7 +372,8 @@ public class ModelToXML {
 					for (Map.Entry<Short, Vector<OptionDef>> dynOptEntry : (Set<Map.Entry<Short, Vector<OptionDef>>>) dynOptDef
 							.getParentToChildOptions().entrySet()) {
 						for (OptionDef option : dynOptEntry.getValue()) {
-							String itemPattern = "\t\t\t\t<item id=\"{0}\" parent=\"{1}\"><label>{2}</label><value>{0}</value></item>\n";
+							indent(buf, 4);
+							String itemPattern = "<item id=\"{0}\" parent=\"{1}\"><label>{2}</label><value>{0}</value></item>\n";
 							OptionDef parentOption = possibleParentValues
 									.get(dynOptEntry.getKey());
 							String itemDef = MessageFormat.format(itemPattern,
@@ -352,9 +384,10 @@ public class ModelToXML {
 							buf.append(itemDef);
 						}
 					}
-
-					buf.append("\t\t\t</dynamiclist>\n");
-					buf.append("\t\t</xf:instance>\n");
+					indent(buf, 3);
+					buf.append("</dynamiclist>\n");
+					indent(buf, 2);
+					buf.append("</xf:instance>\n");
 				}
 			}
 		}
@@ -365,26 +398,28 @@ public class ModelToXML {
 
 		FormDef formDef = rootTree.getFormDef();
 
-		buf.append(MessageFormat.format("\t\t<xf:instance id=\"{0}\">",
+		indent(buf, 2);
+		buf.append(MessageFormat.format("<xf:instance id=\"{0}\">",
 				formDef.getVariableName()));
 		buf.append('\n');
 
 		// Generate the main instance
-		buf.append(MessageFormat
-				.format("\t\t\t<{0} description-template=\"{1}\" id=\"{2}\" name=\"{3}\">",
-						formDef.getVariableName(),
-						formDef.getDescriptionTemplate(), formDef.getId(),
-						formDef.getName()));
+		indent(buf, 3);
+		buf.append(MessageFormat.format(
+				"<{0} description-template=\"{1}\" id=\"{2}\" name=\"{3}\">",
+				formDef.getVariableName(), formDef.getDescriptionTemplate(),
+				formDef.getId(), formDef.getName()));
 		buf.append('\n');
 		if (!rootTree.isLeaf()) {
 			for (QuestionTree childTree : rootTree.getChildren()) {
 				generateInstanceElement(childTree, buf);
 			}
 		}
-		buf.append(MessageFormat.format("\t\t\t</{0}>",
-				formDef.getVariableName()));
+		indent(buf, 3);
+		buf.append(MessageFormat.format("</{0}>", formDef.getVariableName()));
 		buf.append('\n');
-		buf.append("\t\t</xf:instance>");
+		indent(buf, 2);
+		buf.append("</xf:instance>");
 	}
 
 	private static void generateInstanceElement(QuestionTree tree,
@@ -394,9 +429,7 @@ public class ModelToXML {
 		QuestionDef question = tree.getQuestion();
 		String instanceBinding = "/" + form.getVariableName() + "/";
 		String questionBinding = tree.getQuestion().getVariableName();
-		StringBuilder pad = new StringBuilder("\t\t\t\t");
-		for (int i = 1; i < tree.getDepth(); i++)
-			pad.append('\t');
+		int ilen = 3 + tree.getDepth();
 
 		if (questionBinding.startsWith(instanceBinding))
 			questionBinding = questionBinding.substring(instanceBinding
@@ -404,15 +437,13 @@ public class ModelToXML {
 
 		String[] elements = questionBinding.split("/");
 		for (int elem = 0; elem < elements.length - 1; elem++) {
-			buf.append(pad);
-			for (int depth = 0; depth < elem; depth++)
-				buf.append('\t');
+			indent(buf, ilen + elem);
 			buf.append(MessageFormat.format("<{0}>\n", elements[elem]));
 		}
 
 		String lastElement = elements[elements.length - 1];
 		if (tree.isLeaf()) {
-			buf.append(pad);
+			indent(buf, ilen);
 			String defaultValue = question.getDefaultValue();
 			if (defaultValue != null && !"".equals(defaultValue))
 				buf.append(MessageFormat.format("<{0}>{1}</{0}>\n",
@@ -420,16 +451,16 @@ public class ModelToXML {
 			else
 				buf.append(MessageFormat.format("<{0}/>\n", lastElement));
 		} else {
-			buf.append(MessageFormat.format("{0}\t<{1}>\n", pad, lastElement));
+			indent(buf, ilen + 1);
+			buf.append(MessageFormat.format("<{0}>\n", lastElement));
 			for (QuestionTree childTree : tree.getChildren())
 				generateInstanceElement(childTree, buf);
-			buf.append(MessageFormat.format("{0}\t</{1}>\n", pad, lastElement));
+			indent(buf, ilen + 1);
+			buf.append(MessageFormat.format("</{0}>\n", lastElement));
 		}
 
 		for (int elem = elements.length - 2; elem >= 0; elem--) {
-			buf.append(pad);
-			for (int depth = 0; depth < elem; depth++)
-				buf.append('\t');
+			indent(buf, ilen + elem);
 			String elementName = elements[elem];
 			buf.append(MessageFormat.format("</{0}>\n", elementName));
 		}
