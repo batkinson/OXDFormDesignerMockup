@@ -7,6 +7,7 @@ import org.apache.pivot.wtk.Point;
 import org.apache.pivot.wtk.TreeView;
 import org.apache.pivot.wtk.Visual;
 import org.openxdata.designer.util.Option;
+import org.openxdata.designer.util.Page;
 import org.openxdata.designer.util.Question;
 
 public class DragSource implements org.apache.pivot.wtk.DragSource {
@@ -19,7 +20,8 @@ public class DragSource implements org.apache.pivot.wtk.DragSource {
 			return false;
 		tree = (TreeView) component;
 		Object obj = tree.getSelectedNode();
-		boolean acceptDrag = obj instanceof Question || obj instanceof Option;
+		boolean acceptDrag = obj instanceof Page || obj instanceof Question
+				|| obj instanceof Option;
 		return acceptDrag;
 	}
 

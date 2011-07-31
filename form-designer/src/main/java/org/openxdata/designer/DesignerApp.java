@@ -60,7 +60,6 @@ import org.apache.pivot.wtk.text.PlainTextSerializer;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.xform.EpihandyXform;
 import org.openxdata.designer.util.Form;
-import org.openxdata.designer.util.Option;
 import org.openxdata.designer.util.Question;
 import org.openxdata.modelutils.ModelToXML;
 import org.slf4j.Logger;
@@ -368,27 +367,25 @@ public class DesignerApp implements Application {
 
 				Sequence.Tree.remove(treeData, draggedObject);
 
-				boolean acceptsAdd = (draggedObject instanceof Option
-						&& targetObject instanceof Question && ((Question) targetObject)
-						.isStaticOptionList())
-						|| (draggedObject instanceof Question
-								&& targetObject instanceof Question && ((Question) targetObject)
-								.isQuestionList())
-						|| (targetObject instanceof List && !(targetObject instanceof Question));
+				boolean isInsert = draggedObject.getClass() == targetObject
+						.getClass()
+						&& !(draggedObject instanceof Question && ((Question) targetObject)
+								.isQuestionList());
 
 				// Fix target when preceding sibling at any depth is removed.
 				targetPath = adjustPathForRemovedSibling(draggedPath,
 						targetPath);
 
-				if (acceptsAdd) {
-					designTree.setBranchExpanded(targetPath, true);
-					Sequence.Tree.add(treeData, draggedObject, targetPath);
-				} else {
+				if (isInsert) {
 					int insertLocation = targetPath
 							.get(targetPath.getLength() - 1) + 1;
 					designTree.setBranchExpanded(targetParentPath, true);
 					Sequence.Tree.insert(treeData, draggedObject,
 							targetParentPath, insertLocation);
+
+				} else {
+					designTree.setBranchExpanded(targetPath, true);
+					Sequence.Tree.add(treeData, draggedObject, targetPath);
 				}
 
 			} else if (dragContent.containsFileList()) {

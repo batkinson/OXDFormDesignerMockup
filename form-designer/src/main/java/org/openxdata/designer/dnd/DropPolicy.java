@@ -16,7 +16,9 @@ public class DropPolicy {
 		if (source == target)
 			return false;
 
-		if (source instanceof Question) {
+		if (source instanceof Page && target instanceof Page) {
+			return true;
+		} else if (source instanceof Question) {
 			if (target instanceof Page) {
 				Page targetPage = (Page) target;
 				return targetPage.indexOf((Question) source) == -1;
