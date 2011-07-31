@@ -3,7 +3,6 @@
 	xmlns:bxml="http://pivot.apache.org/bxml"
 	xmlns:dnd="org.openxdata.designer.dnd"
 	xmlns:content="org.apache.pivot.wtk.content"
-	xmlns:formtree="org.openxdata.designer.formtree"
 	xmlns:designtree="org.openxdata.designer.designtree"
 	xmlns="org.apache.pivot.wtk">
 	
