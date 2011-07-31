@@ -14,9 +14,9 @@
 		<bxml:include bxml:id="dynamicOptionDialog" src="dynamicOptionDialog.bxml" inline="true" />
 		<bxml:include bxml:id="skipRuleDialog" src="skipRuleDialog.bxml" />
 		<bxml:include bxml:id="validationRuleDialog" src="validationRuleDialog.bxml" />
+		<designtree:DragSource bxml:id="dragSource" />
+		<designtree:DropTarget bxml:id="dropTarget" application="$application" />
 	</bxml:define>
-
-	<bxml:script src="dragdrop.js" />
 	
 	<TabPane bxml:id="tabPane">
 		<GridPane columnCount="1">
@@ -26,7 +26,7 @@
 			<GridPane.Row>
 				<Border styles="{color:10, padding:6}">
 					<ScrollPane horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
-						<TreeView bxml:id="designTree" styles="{showEmptyBranchControls:false}" dropTarget="$formTreeDropTarget" dragSource="$designTreeDragSource">
+						<TreeView bxml:id="designTree" styles="{showEmptyBranchControls:false}" dropTarget="$dropTarget" dragSource="$dragSource">
 							<nodeRenderer>
 								<designtree:NodeRenderer/>
 							</nodeRenderer>
@@ -58,7 +58,7 @@
 			<GridPane.Row>
 				<Border styles="{color:10, padding:6}">
 					<ScrollPane horizontalScrollBarPolicy="fill_to_capacity" verticalScrollBarPolicy="fill_to_capacity">
-						<TextPane bxml:id="formText" dropTarget="$formTreeDropTarget" editable="false">
+						<TextPane bxml:id="formText" dropTarget="$dropTarget" editable="false">
 							<componentKeyListeners>
 								<![CDATA[
 								importPackage(org.apache.pivot.wtk);
