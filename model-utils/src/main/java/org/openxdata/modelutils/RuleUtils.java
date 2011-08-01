@@ -2,11 +2,14 @@ package org.openxdata.modelutils;
 
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import static org.apache.commons.lang.StringUtils.countMatches;
+import static org.apache.commons.lang.StringUtils.repeat;
 import org.fcitmuk.epihandy.Condition;
 import org.fcitmuk.epihandy.EpihandyConstants;
 import org.fcitmuk.epihandy.FormDef;
@@ -17,6 +20,7 @@ import org.fcitmuk.epihandy.ValidationRule;
 public class RuleUtils {
 
 	private static Map<Byte, String> opMap = new HashMap<Byte, String>();
+	private static Set<Byte> functionOps = new HashSet<Byte>();
 
 	static {
 		opMap.put(EpihandyConstants.OPERATOR_EQUAL, "=");
@@ -25,6 +29,15 @@ public class RuleUtils {
 		opMap.put(EpihandyConstants.OPERATOR_LESS_EQUAL, "&lt;=");
 		opMap.put(EpihandyConstants.OPERATOR_GREATER, "&gt;");
 		opMap.put(EpihandyConstants.OPERATOR_GREATER_EQUAL, "&gt;=");
+		opMap.put(EpihandyConstants.OPERATOR_STARTS_WITH, "starts-with");
+		opMap.put(EpihandyConstants.OPERATOR_NOT_START_WITH, "not(starts-with");
+		opMap.put(EpihandyConstants.OPERATOR_CONTAINS, "contains");
+		opMap.put(EpihandyConstants.OPERATOR_NOT_CONTAIN, "not(contains");
+
+		functionOps.add(EpihandyConstants.OPERATOR_STARTS_WITH);
+		functionOps.add(EpihandyConstants.OPERATOR_NOT_START_WITH);
+		functionOps.add(EpihandyConstants.OPERATOR_CONTAINS);
+		functionOps.add(EpihandyConstants.OPERATOR_NOT_CONTAIN);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -92,10 +105,7 @@ public class RuleUtils {
 
 				buf.append(qPath);
 				buf.append(' ');
-				buf.append(opTypeToString(c.getOperator()));
-				buf.append(" '");
-				buf.append(c.getValue());
-				buf.append('\'');
+				buf.append(buildOpExpr(c.getOperator(), c.getValue(), true));
 
 				if (i < conditions.size() - 1 && conditions.size() > 1) {
 					buf.append(' ');
@@ -131,9 +141,7 @@ public class RuleUtils {
 			else
 				buf.append(qPath);
 			buf.append(' ');
-			buf.append(opTypeToString(c.getOperator()));
-			buf.append(' ');
-			buf.append(c.getValue());
+			buf.append(buildOpExpr(c.getOperator(), c.getValue(), false));
 
 			if (i < conditions.size() - 1 && conditions.size() > 1) {
 				buf.append(' ');
@@ -144,7 +152,20 @@ public class RuleUtils {
 		return buf.toString();
 	}
 
-	public static String opTypeToString(byte opType) {
-		return opMap.get(opType);
+	public static String buildOpExpr(byte opType, String operand, boolean quote) {
+		String opString = opMap.get(opType);
+		String pattern;
+		String closingParens = "";
+		if (isOpTypeFunction(opType)) {
+			pattern = "{0}({2}{1}{2}{3})";
+			closingParens = repeat(")", countMatches(opString, "("));
+		} else
+			pattern = "{0} {2}{1}{2}";
+		return MessageFormat.format(pattern, opString, operand, quote ? "'"
+				: "", closingParens);
+	}
+
+	public static boolean isOpTypeFunction(byte opType) {
+		return functionOps.contains(opType);
 	}
 }

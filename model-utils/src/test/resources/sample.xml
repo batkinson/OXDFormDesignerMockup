@@ -5,6 +5,8 @@
 			<patientreg description-template="${/patientreg/lastname}$ in ${/patientreg/continent}$" id="1" name="Patient Registration">
 				<patientid/>
 				<title/>
+				<yearsmarried/>
+				<evermarried/>
 				<firstname/>
 				<lastname/>
 				<sex/>
@@ -19,6 +21,8 @@
 				<location/>
 				<continent/>
 				<country/>
+				<seenme/>
+				<willseeme/>
 				<district/>
 				<village/>
 				<nokids>0</nokids>
@@ -196,6 +200,10 @@
 		<xf:bind id="endtime" nodeset="/patientreg/endtime" type="xsd:time"/>
 		<xf:bind format="phonenumber" id="phone" nodeset="/patientreg/phone" type="xsd:string" />
 		<xf:bind id="visitdate" nodeset="/patientreg/visitdate" type="xsd:dateTime" />
+		<xf:bind id="yearsmarried" nodeset="/patientreg/yearsmarried" type="xsd:int" relevant="/patientreg/title contains('r')" action="show" />
+		<xf:bind id="evermarried" nodeset="/patientreg/evermarried" type="xsd:boolean" relevant="/patientreg/title not(contains('r'))" action="show" />
+		<xf:bind id="seenme" nodeset="/patientreg/seenme" type="xsd:boolean" relevant="/patientreg/country starts-with('us')" action="show" required="true()" />
+		<xf:bind id="willseeme" nodeset="/patientreg/willseeme" type="xsd:boolean" relevant="/patientreg/country not(starts-with('us'))" action="show" required="true()" />
 	</xf:model>
 	<xf:group id="1">
 		<xf:label>Page1</xf:label>
@@ -216,7 +224,13 @@
 				<xf:label>Miss</xf:label>
 				<xf:value>miss</xf:value>	
 			</xf:item>	
-		</xf:select1>	
+		</xf:select1>
+		<xf:input bind="yearsmarried">
+			<xf:label># Years Married</xf:label>
+		</xf:input>
+		<xf:select1 bind="evermarried">
+			<xf:label>Ever Married?</xf:label>
+		</xf:select1>
 		<xf:input bind="firstname">	
 			<xf:label>First Name</xf:label>	
 		</xf:input>	

@@ -313,14 +313,17 @@ public class ModelToXMLTest extends TestCase {
 	}
 
 	public void testSkipLogicConversion() throws Exception {
-		String matchPattern = "count(//xf:bind[@id=''{0}'' and @relevant=\"/patientreg/sex = ''female''\" and @action=''enable''])";
-		String[][] matchParams = { { "pregnant" } };
+		String[] matchPatterns = {
+				"count(//xf:bind[@id='pregnant' and @relevant=\"/patientreg/sex = 'female'\" and @action='enable'])",
+				"count(//xf:bind[@id='yearsmarried' and @relevant=\"/patientreg/title contains('r')\" and @action='show'])",
+				"count(//xf:bind[@id='evermarried' and @relevant=\"/patientreg/title not(contains('r'))\"])",
+				"count(//xf:bind[@id='seenme' and @relevant=\"/patientreg/country starts-with('us')\"])",
+				"count(//xf:bind[@id='willseeme' and @relevant=\"/patientreg/country not(starts-with('us'))\"])", };
 
-		for (String[] matchParam : matchParams) {
+		for (String matchPattern : matchPatterns) {
 			convertedStream.reset(); // Restore stream state
-			String expr = MessageFormat.format(matchPattern,
-					(Object[]) matchParam);
-			XPathExpression compiledExpr = xpath.compile(expr);
+			String expr = matchPattern;
+			XPathExpression compiledExpr = xpath.compile(matchPattern);
 			Double matchCount = (Double) compiledExpr.evaluate(convertedSource,
 					XPathConstants.NUMBER);
 			assertEquals(expr + " skip rule not present ", 1,

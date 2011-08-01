@@ -1,5 +1,6 @@
 package org.openxdata.modelutils;
 
+import static org.apache.commons.lang.StringUtils.repeat;
 import static org.openxdata.modelutils.OptionUtils.getDynOptDepMap;
 import static org.openxdata.modelutils.OptionUtils.getPossibleValues;
 import static org.openxdata.modelutils.QuestionUtils.getIdFromVarName;
@@ -42,8 +43,7 @@ public class ModelToXML {
 	private static String PAD = "    ";
 
 	private static void indent(StringBuilder b, int depth) {
-		for (int i = 0; i < depth; i++)
-			b.append(PAD);
+		b.append(repeat(PAD, depth));
 	}
 
 	public static String convert(FormDef formDef, boolean useNamespaces) {

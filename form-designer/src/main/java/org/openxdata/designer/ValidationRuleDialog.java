@@ -66,7 +66,7 @@ public class ValidationRuleDialog extends Dialog implements Bindable {
 				.getLabels());
 
 		String[] skippedOperators = { "NULL", "IN_LIST", "NOT_IN_LIST",
-				"IS_NULL", "IS_NOT_NULL" };
+				"IS_NULL", "IS_NOT_NULL", "BETWEEN", "NOT_BETWEEN" };
 		Set<String> skippedOperatorSet = new HashSet<String>();
 		for (String op : skippedOperators)
 			skippedOperatorSet.add(op);
