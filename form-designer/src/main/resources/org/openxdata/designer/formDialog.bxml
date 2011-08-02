@@ -17,6 +17,12 @@
 					<BoxPane Form.label="%formNameLabel" >
 						<TextInput bxml:id="formName" textKey="name" />
 					</BoxPane>
+					<BoxPane Form.label="%formVariableNameLabel" >
+						<TextInput bxml:id="formVariableName" textKey="variableName" />
+					</BoxPane>
+					<BoxPane Form.label="%formDescriptionTemplateLabel" >
+						<TextInput bxml:id="formDescriptionTemplate" textKey="descriptionTemplate" />
+					</BoxPane>
 				</Form.Section>
 			</Form>
 		</TablePane.Row>

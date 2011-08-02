@@ -14,6 +14,8 @@
 	questionDialogTitle: "Question Properties",
 	formIdLabel: "Id",
 	formNameLabel: "Name",
+	formVariableNameLabel: "Binding",
+	formDescriptionTemplateLabel: "Description",
 	pageNumLabel: "Page Number",
 	pageNameLabel: "Name",
 	questionIdLabel: "Id",
