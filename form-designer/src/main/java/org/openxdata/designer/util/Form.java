@@ -21,6 +21,7 @@ import org.fcitmuk.epihandy.SkipRule;
 import org.fcitmuk.epihandy.ValidationRule;
 import org.openxdata.designer.idgen.DefaultIdGenerator;
 import org.openxdata.designer.idgen.ScarceIdGenerator;
+import org.openxdata.modelutils.FormUtils;
 
 /**
  * 
@@ -133,6 +134,13 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 				}
 			}
 		}
+	}
+
+	@Override
+	public void setVariableName(String variableName) {
+		String oldName = getVariableName();
+		super.setVariableName(variableName);
+		FormUtils.updateFormVarName(this, oldName, variableName);
 	}
 
 	@Override
