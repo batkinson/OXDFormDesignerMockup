@@ -44,35 +44,41 @@ public class FormUtils {
 		updateFormVarName(qTree, varRegex, varReplacement);
 
 		// Update the validation rule condition operands
-		for (ValidationRule vr : (Vector<ValidationRule>) form
-				.getValidationRules()) {
-			for (Condition vc : (Vector<Condition>) vr.getConditions()) {
-				String value = vc.getValue();
-				if (value != null) {
-					vc.setValue(value.replaceFirst(varRegex, varReplacement));
-				}
-				String secondValue = vc.getSecondValue();
-				if (secondValue != null) {
-					vc.setSecondValue(secondValue.replaceFirst(varRegex,
-							varReplacement));
+		Vector<ValidationRule> vrules = (Vector<ValidationRule>) form
+				.getValidationRules();
+		if (vrules != null)
+			for (ValidationRule vr : vrules) {
+				for (Condition vc : (Vector<Condition>) vr.getConditions()) {
+					String value = vc.getValue();
+					if (value != null) {
+						vc.setValue(value
+								.replaceFirst(varRegex, varReplacement));
+					}
+					String secondValue = vc.getSecondValue();
+					if (secondValue != null) {
+						vc.setSecondValue(secondValue.replaceFirst(varRegex,
+								varReplacement));
+					}
 				}
 			}
-		}
 
 		// Update the skip rule condition operands
-		for (SkipRule sr : (Vector<SkipRule>) form.getSkipRules()) {
-			for (Condition sc : (Vector<Condition>) sr.getConditions()) {
-				String value = sc.getValue();
-				if (value != null) {
-					sc.setValue(value.replaceFirst(varRegex, varReplacement));
-				}
-				String secondValue = sc.getSecondValue();
-				if (secondValue != null) {
-					sc.setSecondValue(secondValue.replaceFirst(varRegex,
-							varReplacement));
+		Vector<SkipRule> srules = (Vector<SkipRule>) form.getSkipRules();
+		if (srules != null)
+			for (SkipRule sr : srules) {
+				for (Condition sc : (Vector<Condition>) sr.getConditions()) {
+					String value = sc.getValue();
+					if (value != null) {
+						sc.setValue(value
+								.replaceFirst(varRegex, varReplacement));
+					}
+					String secondValue = sc.getSecondValue();
+					if (secondValue != null) {
+						sc.setSecondValue(secondValue.replaceFirst(varRegex,
+								varReplacement));
+					}
 				}
 			}
-		}
 	}
 
 	private static void updateFormVarName(QuestionTree tree,

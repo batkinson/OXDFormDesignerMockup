@@ -58,6 +58,13 @@ public class FormUtilsTest {
 	}
 
 	@Test
+	public void testUpdateFormVarNameNull() {
+		log.debug("testing updates on default form def object");
+		FormDef f = new FormDef();
+		FormUtils.updateFormVarName(f, "doesnot", "matter");
+	}
+
+	@Test
 	public void testUpdateFormVarName() {
 
 		log.debug("testing variable name updates");
