@@ -1,13 +1,15 @@
 package org.openxdata.modelutils;
 
-import java.io.BufferedReader;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.text.MessageFormat;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,73 +18,79 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import junit.framework.TestCase;
-
+import org.apache.commons.io.IOUtils;
 import org.fcitmuk.epihandy.DynamicOptionDef;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.PageDef;
 import org.fcitmuk.epihandy.QuestionDef;
 import org.fcitmuk.epihandy.xform.EpihandyXform;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 
 @SuppressWarnings("unchecked")
-public class ModelToXMLTest extends TestCase {
+public class ModelToXMLTest {
 
 	private static Logger log = LoggerFactory.getLogger(ModelToXMLTest.class);
 
-	FormDef sampleDef;
-	String sampleXml;
-	String convertedXml;
-	FormDef reparsedDef;
-	InputStream convertedStream;
-	InputSource convertedSource;
-	XPath xpath;
-	Map<Short, QuestionDef> dynOptDepMap;
+	static FormDef sampleDef;
+	static String sampleXml;
+	static String convertedXml;
+	static FormDef reparsedDef;
+	static InputStream convertedStream;
+	static InputSource convertedSource;
+	static XPath xpath;
+	static Map<Short, QuestionDef> dynOptDepMap;
 
-	{
+	/**
+	 * While not strictly necessary, nothing here needs to be setup more than
+	 * once. By only running it once, it should be a bit faster, but more
+	 * importantly, the logs will contain the information from a single xml
+	 * conversion.
+	 */
+	@BeforeClass
+	public static void setUpOnce() {
+
 		InputStream sampleStream = ModelToXMLTest.class
 				.getResourceAsStream("/sample.xml");
 
-		BufferedReader sampleReader = new BufferedReader(new InputStreamReader(
-				sampleStream));
-		StringBuilder buf = new StringBuilder();
-		String line = null;
+		log.debug("loading sample xform");
 		try {
-			while ((line = sampleReader.readLine()) != null)
-				buf.append(line);
-			buf.append('\n');
-			sampleXml = buf.toString();
+			sampleXml = IOUtils.toString(sampleStream);
+			log.debug("loaded xml:\n" + sampleXml);
 		} catch (IOException e) {
-			String msg = "Failed to read in sample.xml";
+			String msg = "Failed to read xform";
 			log.error(msg, e);
 			throw new RuntimeException(msg);
 		}
 
+		log.debug("converting sample xform to model");
 		sampleDef = EpihandyXform
 				.fromXform2FormDef(new StringReader(sampleXml));
 
-		dynOptDepMap = new HashMap<Short, QuestionDef>();
-		for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) sampleDef
-				.getDynamicOptions().entrySet()) {
-			dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
-					sampleDef.getQuestion(dynOptEntry.getKey()));
-		}
+		log.debug("constructing dynamic option dependency map");
+		dynOptDepMap = OptionUtils.getDynOptDepMap(sampleDef);
 
+		log.debug("converting model back to xform");
 		convertedXml = ModelToXML.convert(sampleDef);
 
+		log.debug("reconstructing model by parsing converted xform");
 		reparsedDef = EpihandyXform.fromXform2FormDef(new StringReader(
 				convertedXml));
 
+		log.debug("constructing resettable streams containing converted xml");
 		convertedStream = new ByteArrayInputStream(convertedXml.getBytes());
 		convertedSource = new InputSource(convertedStream);
 
+		log.debug("constructing xpath engine");
 		XPathFactory xpathFactory = javax.xml.xpath.XPathFactory.newInstance();
 		xpath = xpathFactory.newXPath();
 		xpath.setNamespaceContext(new NamespaceContext());
 	}
 
+	@Test
 	public void testNullConversion() {
 		try {
 			ModelToXML.convert(null);
@@ -91,6 +99,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testFormConversion() {
 		assertEquals(sampleDef.getVariableName(), reparsedDef.getVariableName());
 		assertEquals(sampleDef.getDescriptionTemplate(),
@@ -99,6 +108,7 @@ public class ModelToXMLTest extends TestCase {
 		assertEquals(sampleDef.getName(), reparsedDef.getName());
 	}
 
+	@Test
 	public void testPageConversion() {
 		assertEquals("page counts didn't match", sampleDef.getPageCount(),
 				reparsedDef.getPageCount());
@@ -114,6 +124,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testBindingConversion() throws Exception {
 		String[] exprs = {
 				"count(//xf:bind[@id='patientid' and @nodeset='/patientreg/patientid' and @type='xsd:string'])",
@@ -140,6 +151,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testBoundInputConversion() throws Exception {
 
 		String matchPattern = "count(//xf:input[@bind=''{0}''])";
@@ -170,6 +182,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testBoundUploadConversion() throws Exception {
 
 		String matchPattern = "count(//xf:upload[@bind=''{0}'' and @mediatype=''{1}''])";
@@ -188,6 +201,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testExclusiveListConversion() throws Exception {
 
 		String matchPattern = "count(//xf:select1[@bind=''{0}'' and count(xf:item) = ''{1}''])";
@@ -207,6 +221,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testMultiSelectListConversion() throws Exception {
 
 		String matchPattern = "count(//xf:select[@bind=''{0}'' and count(xf:item) = ''{1}''])";
@@ -226,6 +241,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testDynamicListConversion() throws Exception {
 
 		String matchPattern = "count(//xf:select1[@bind=''{1}'']/xf:itemset[@nodeset=\"instance(''{1}'')/item[@parent=instance(''{0}'')/{2}]\"])";
@@ -244,6 +260,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testDynamicListItemConversion() throws Exception {
 
 		String matchPattern = "count(//xf:instance[@id=''{0}'']/dynamiclist[count(item) = ''{1}''])";
@@ -270,6 +287,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testDefaultsConversion() throws Exception {
 
 		String matchPattern = "count(//xf:instance[@id=''{0}'']/{0}[{1} = \"{2}\"])";
@@ -288,6 +306,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testValidationConversion() throws Exception {
 		String matchPattern = "count(//xf:bind[@id=''{0}'' and @constraint=''{1}'' and @message=''{2}''])";
 		String[][] matchParams = {
@@ -312,6 +331,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testSkipLogicConversion() throws Exception {
 		String[] matchPatterns = {
 				"count(//xf:bind[@id='pregnant' and @relevant=\"/patientreg/sex = 'female'\" and @action='enable'])",
@@ -331,6 +351,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testRepeatInstanceConversion() throws Exception {
 		String matchPattern = "count(//xf:instance[@id=''{0}'']/{0}/kids/kid/{1})";
 		String[] matchParams = { "kidname", "kidsex", "kidage" };
@@ -349,6 +370,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testRepeatControlConversion() throws Exception {
 		String matchPattern = "count(//xf:group[@id=''{0}'' and xf:label = ''{1}'' and xf:repeat[@bind=''{2}'']])";
 		String[][] matchParams = { { "kids/kid", "Kids", "kid" } };
@@ -365,6 +387,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testRepeatBindConversion() throws Exception {
 		String[] matchPatterns = { "count(//xf:bind[@id='kid' and @nodeset='/patientreg/kids/kid'])" };
 
@@ -379,6 +402,7 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testNestedControlConversion() throws Exception {
 		String matchPattern = "count(//xf:group[@id=''kids/kid'']/xf:repeat/xf:{0}[@ref=''{1}'' and @type=''{2}''])";
 		String[][] matchParams = { { "input", "kidname", "xsd:string" },
@@ -397,8 +421,12 @@ public class ModelToXMLTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testNoNSConverstion() {
+		log.debug("testing conversion to xml with no namespace");
+		String convertedXml = ModelToXML.convert(sampleDef, false);
+		log.debug("converted xml without namespace:\n" + convertedXml);
 		assertFalse("exported xml should not contain namespace prefixes",
-				ModelToXML.convert(sampleDef, false).contains("xf:"));
+				convertedXml.contains("xf:"));
 	}
 }
