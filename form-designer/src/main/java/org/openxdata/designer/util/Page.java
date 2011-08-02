@@ -58,10 +58,12 @@ public class Page extends org.fcitmuk.epihandy.PageDef implements
 		this.questionIdGen = idGen;
 	}
 
-	public void newQuestion() {
+	public void newQuestion(Form form) {
 		Question question = new Question();
 		short nextId = (short) questionIdGen.nextId();
 		question.setId(nextId);
+		question.setVariableName(String.format("/%s/question%d",
+				form.getVariableName(), nextId));
 		add(question);
 	}
 

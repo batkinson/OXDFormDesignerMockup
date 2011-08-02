@@ -45,15 +45,17 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 		this.questionIdGen = questionIdGen;
 	}
 
-	public void newQuestion() {
+	public void newQuestion(Form form) {
 		Question newQuestion = new Question();
 		newQuestion.setQuestionIdGen(questionIdGen);
 		short questionId = (short) questionIdGen.nextId();
 		newQuestion.setId(questionId);
+		newQuestion.setVariableName(String.format("/%s/question%d",
+				form.getVariableName(), questionId));
 		add(newQuestion);
 	}
 
-	public void newOption() {
+	public void newOption(Form form) {
 		Option newOption = new Option();
 		short optionId = (short) optionIdGen.nextId();
 		newOption.setId(optionId);

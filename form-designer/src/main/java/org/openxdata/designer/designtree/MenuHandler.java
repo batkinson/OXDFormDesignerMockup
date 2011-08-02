@@ -120,7 +120,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 					@Override
 					public void perform(Component source) {
 						designTree.setBranchExpanded(clickedPath, true);
-						page.newQuestion();
+						page.newQuestion(form);
 					}
 				});
 
@@ -168,7 +168,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 					@Override
 					public void perform(Component source) {
 						designTree.setBranchExpanded(clickedPath, true);
-						question.newQuestion();
+						question.newQuestion(form);
 					}
 				});
 
@@ -176,7 +176,7 @@ public class MenuHandler implements org.apache.pivot.wtk.MenuHandler {
 					@Override
 					public void perform(Component source) {
 						designTree.setBranchExpanded(clickedPath, true);
-						question.newOption();
+						question.newOption(form);
 					}
 				});
 
