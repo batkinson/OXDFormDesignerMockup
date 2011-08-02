@@ -22,6 +22,7 @@ import org.fcitmuk.epihandy.ValidationRule;
 import org.openxdata.designer.idgen.DefaultIdGenerator;
 import org.openxdata.designer.idgen.ScarceIdGenerator;
 import org.openxdata.modelutils.FormUtils;
+import org.openxdata.modelutils.RuleUtils;
 
 /**
  * 
@@ -134,6 +135,9 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 				}
 			}
 		}
+
+		// Consolidate skip rules into optimal set using multi-targets
+		RuleUtils.consolidateSkipRules(this);
 	}
 
 	@Override

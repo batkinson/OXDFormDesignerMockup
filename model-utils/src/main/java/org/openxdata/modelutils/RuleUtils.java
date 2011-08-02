@@ -1,6 +1,10 @@
 package org.openxdata.modelutils;
 
+import static org.apache.commons.lang.StringUtils.countMatches;
+import static org.apache.commons.lang.StringUtils.repeat;
+
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -8,8 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-import static org.apache.commons.lang.StringUtils.countMatches;
-import static org.apache.commons.lang.StringUtils.repeat;
 import org.fcitmuk.epihandy.Condition;
 import org.fcitmuk.epihandy.EpihandyConstants;
 import org.fcitmuk.epihandy.FormDef;
@@ -167,5 +169,38 @@ public class RuleUtils {
 
 	public static boolean isOpTypeFunction(byte opType) {
 		return functionOps.contains(opType);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static void consolidateSkipRules(FormDef form) {
+
+		Map<String, SkipRule> optimal = new HashMap<String, SkipRule>();
+
+		Vector<SkipRule> srules = (Vector<SkipRule>) form.getSkipRules();
+		if (srules != null)
+			for (SkipRule sr : srules) {
+
+				Short targetId = (Short) sr.getActionTargets().get(0);
+				QuestionDef targetQuestion = form.getQuestion(targetId);
+				Set<SkipRule> targetRules = new HashSet<SkipRule>(
+						Arrays.asList(new SkipRule[] { sr }));
+
+				String relevantClause = buildSkipRuleLogic(form, targetRules,
+						targetQuestion);
+				String ruleKey = String.format("<%d>%s", sr.getAction(),
+						relevantClause);
+
+				SkipRule existingRule = optimal.get(ruleKey);
+
+				if (optimal.isEmpty() || existingRule == null) {
+					optimal.put(ruleKey, sr);
+				} else {
+					existingRule.getActionTargets().add(targetId);
+				}
+			}
+
+		// Once we have built the optimal rules, update the form
+		form.getSkipRules().clear();
+		form.getSkipRules().addAll(optimal.values());
 	}
 }

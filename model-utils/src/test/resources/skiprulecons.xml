@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<xf:xforms xmlns:xf="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xf:model>
+		<xf:instance id="skiprulecons">
+			<skiprulecons description-template="" id="1" name="Skip Rule Consolidation">
+				<question1 />
+				<question2 />
+				<question3 />
+				<question4 />
+				<question5 />
+				<question6 />
+				<question7 />
+				<question8 />
+				<question9 />
+				<question10 />
+				<question11 />
+			</skiprulecons>
+		</xf:instance>
+		<xf:bind id="question1" nodeset="/skiprulecons/question1" type="xsd:string" />
+		<xf:bind id="question2" nodeset="/skiprulecons/question2" type="xsd:string" relevant="/skiprulecons/question1 != 'odd'" action="hide" required="false()" />
+		<xf:bind id="question3" nodeset="/skiprulecons/question3" type="xsd:string" relevant="/skiprulecons/question1 != 'even'" action="hide" required="false()" />
+		<xf:bind id="question4" nodeset="/skiprulecons/question4" type="xsd:string" relevant="/skiprulecons/question1 != 'odd'" action="hide" required="false()" />
+		<xf:bind id="question5" nodeset="/skiprulecons/question5" type="xsd:string" relevant="/skiprulecons/question1 != 'even'" action="hide" required="false()" />
+		<xf:bind id="question6" nodeset="/skiprulecons/question6" type="xsd:string" relevant="/skiprulecons/question1 != 'odd'" action="hide" required="false()" />
+		<xf:bind id="question7" nodeset="/skiprulecons/question7" type="xsd:string" relevant="/skiprulecons/question1 != 'even'" action="hide" required="false()" />
+		<xf:bind id="question8" nodeset="/skiprulecons/question8" type="xsd:string" relevant="/skiprulecons/question1 != 'odd'" action="hide" required="false()" />
+		<xf:bind id="question9" nodeset="/skiprulecons/question9" type="xsd:string" relevant="/skiprulecons/question1 != 'even'" action="hide" required="false()" />
+		<xf:bind id="question10" nodeset="/skiprulecons/question10" type="xsd:string" relevant="/skiprulecons/question1 != 'odd'" action="hide" required="false()" />
+		<xf:bind id="question11" nodeset="/skiprulecons/question11" type="xsd:string" relevant="/skiprulecons/question1 != 'even'" action="disable" required="false()" />
+	</xf:model>
+	<xf:group id="1">
+		<xf:label>Page1</xf:label>
+		<xf:select1 bind="question1">
+			<xf:label>Question 1</xf:label>
+			<xf:item id="even">
+				<xf:label>Even</xf:label>
+				<xf:value>even</xf:value>
+			</xf:item>
+			<xf:item id="odd">
+				<xf:label>Odd</xf:label>
+				<xf:value>odd</xf:value>
+			</xf:item>
+		</xf:select1>
+		<xf:input bind="question2">
+			<xf:label>Question 2</xf:label>
+		</xf:input>
+		<xf:input bind="question3">
+			<xf:label>Question 3</xf:label>
+		</xf:input>
+		<xf:input bind="question4">
+			<xf:label>Question 4</xf:label>
+		</xf:input>
+		<xf:input bind="question5">
+			<xf:label>Question 5</xf:label>
+		</xf:input>
+		<xf:input bind="question6">
+			<xf:label>Question 6</xf:label>
+		</xf:input>
+		<xf:input bind="question7">
+			<xf:label>Question 7</xf:label>
+		</xf:input>
+		<xf:input bind="question8">
+			<xf:label>Question 8</xf:label>
+		</xf:input>
+		<xf:input bind="question9">
+			<xf:label>Question 9</xf:label>
+		</xf:input>
+		<xf:input bind="question10">
+			<xf:label>Question 10</xf:label>
+		</xf:input>
+		<xf:input bind="question11">
+			<xf:label>Question 11</xf:label>
+		</xf:input>
+	</xf:group>
+</xf:xforms>
