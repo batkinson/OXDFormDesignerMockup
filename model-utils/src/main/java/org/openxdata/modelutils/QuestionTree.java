@@ -122,11 +122,14 @@ class QuestionTree {
 	public static QuestionTree constructTreeFromFormDef(FormDef formDef) {
 		QuestionTree result = new QuestionTree(formDef);
 		Vector<PageDef> pages = (Vector<PageDef>) formDef.getPages();
-		for (PageDef p : pages) {
-			for (QuestionDef q : (Vector<QuestionDef>) p.getQuestions()) {
-				constructTreeFromQuestion(result, q);
+		if (pages != null)
+			for (PageDef p : pages) {
+				Vector<QuestionDef> questions = (Vector<QuestionDef>) p
+						.getQuestions();
+				for (QuestionDef q : questions) {
+					constructTreeFromQuestion(result, q);
+				}
 			}
-		}
 
 		if (log.isDebugEnabled())
 			log.debug("parsed question tree: \n" + result);
