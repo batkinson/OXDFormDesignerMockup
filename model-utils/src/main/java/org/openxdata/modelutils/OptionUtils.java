@@ -18,8 +18,9 @@ public class OptionUtils {
 		if (formDef.getDynamicOptions() != null) {
 			for (Map.Entry<Short, DynamicOptionDef> dynOptEntry : (Set<Map.Entry<Short, DynamicOptionDef>>) formDef
 					.getDynamicOptions().entrySet()) {
-				dynOptDepMap.put(dynOptEntry.getValue().getQuestionId(),
-						formDef.getQuestion(dynOptEntry.getKey()));
+				Short parentId = dynOptEntry.getKey();
+				Short childId = dynOptEntry.getValue().getQuestionId();
+				dynOptDepMap.put(childId, formDef.getQuestion(parentId));
 			}
 		}
 		return dynOptDepMap;

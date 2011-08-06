@@ -355,4 +355,10 @@ public class Question extends org.fcitmuk.epihandy.QuestionDef implements
 	public ListenerList<ListListener<PageElement>> getListListeners() {
 		return listenerList;
 	}
+
+	@Override
+	public String toString() {
+		return "'" + getText() + "' (id:'" + getId() + "', binding:'"
+				+ getVariableName() + "')";
+	}
 }

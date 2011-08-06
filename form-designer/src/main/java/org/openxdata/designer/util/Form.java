@@ -23,6 +23,8 @@ import org.openxdata.designer.idgen.DefaultIdGenerator;
 import org.openxdata.designer.idgen.ScarceIdGenerator;
 import org.openxdata.modelutils.FormUtils;
 import org.openxdata.modelutils.RuleUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -30,6 +32,8 @@ import org.openxdata.modelutils.RuleUtils;
  * 
  */
 public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
+
+	private Logger log = LoggerFactory.getLogger(Form.class);
 
 	private ScarceIdGenerator idGen = new DefaultIdGenerator(1, Short.MAX_VALUE);
 
@@ -45,6 +49,8 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 		// Patch up pages into alternative model representation
 		Vector<PageDef> pages = (Vector<PageDef>) getPages();
 		if (pages != null) {
+			if (log.isDebugEnabled())
+				log.debug("constructing out of " + pages.size() + " pages");
 			for (int i = 0; i < pages.size(); i++) {
 				PageDef pageDef = pages.elementAt(i);
 				Page page = new Page(questionIdGen, pageDef);
@@ -53,87 +59,133 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 			}
 		}
 
-		// Patch up dynamic options
 		Hashtable<Short, DynamicOptionDef> dynOptionMap = (Hashtable<Short, DynamicOptionDef>) getDynamicOptions();
 		if (dynOptionMap != null) {
+
+			if (log.isDebugEnabled())
+				log.debug("patching up " + dynOptionMap.size()
+						+ " dynamic options");
+
 			for (Map.Entry<Short, DynamicOptionDef> entry : dynOptionMap
 					.entrySet()) {
-				Hashtable<Short, Vector<OptionDef>> optionMap = entry
-						.getValue().getParentToChildOptions();
+				DynamicOptionDef dOptDef = entry.getValue();
+				Hashtable<Short, Vector<OptionDef>> optionMap = dOptDef
+						.getParentToChildOptions();
+
+				Short childId = dOptDef.getQuestionId();
+				Short parentId = entry.getKey();
+
+				if (log.isDebugEnabled())
+					log.debug("question " + childId + " depends on " + parentId);
+
 				for (Map.Entry<Short, Vector<OptionDef>> optionEntry : optionMap
 						.entrySet()) {
 					Vector<OptionDef> options = optionEntry.getValue();
+					Short parentOptId = optionEntry.getKey();
 					for (int i = 0; i < options.size(); i++)
 						options.set(i, new Option(options.get(i)));
+					if (log.isDebugEnabled())
+						log.debug("option " + parentOptId + " yields "
+								+ options);
 				}
 			}
 		}
 
-		// Patch up question id references that changed
-		Map<Short, Short> globalIdMap = new HashMap<Short, Short>();
+		Map<Short, Short> renamedIdMap = new HashMap<Short, Short>();
 		for (Page p : this) {
-			globalIdMap.putAll(p.getModifiedQuestionIds());
+			renamedIdMap.putAll(p.getModifiedQuestionIds());
 		}
+		if (log.isDebugEnabled())
+			log.debug("qids changed (old=new): " + renamedIdMap);
 
 		if (dynOptionMap != null) {
-			Hashtable<Short, DynamicOptionDef> renamedOptionMap = (Hashtable<Short, DynamicOptionDef>) getDynamicOptions();
+			if (log.isDebugEnabled())
+				log.debug("remapping dynamic options after qid changes");
+			Hashtable<Short, DynamicOptionDef> renamedOptionMap = new Hashtable<Short, DynamicOptionDef>();
 			for (Map.Entry<Short, DynamicOptionDef> entry : dynOptionMap
 					.entrySet()) {
 
-				Short sourceQuestionId = entry.getKey();
+				Short origParentId = entry.getKey();
 				DynamicOptionDef optionDef = entry.getValue();
+				Short origChildId = optionDef.getQuestionId();
 
-				boolean sourceMoved = globalIdMap.containsKey(sourceQuestionId);
-				boolean targetMoved = globalIdMap.containsKey(optionDef
-						.getQuestionId());
+				boolean parentMoved = renamedIdMap.containsKey(origParentId);
+				boolean childMoved = renamedIdMap.containsKey(origChildId);
 
-				if (sourceMoved && targetMoved) {
-					optionDef.setQuestionId(globalIdMap.get(optionDef
-							.getQuestionId()));
-					renamedOptionMap.put(globalIdMap.get(entry.getKey()),
-							optionDef);
-					dynOptionMap.remove(entry.getKey());
-				} else if (sourceMoved) {
-					renamedOptionMap.put(globalIdMap.get(entry.getKey()),
-							entry.getValue());
-					dynOptionMap.remove(entry.getKey());
-				} else if (targetMoved) {
-					optionDef.setQuestionId(globalIdMap.get(optionDef
-							.getQuestionId()));
+				Short newSourceId = origParentId, newTargetId = origChildId;
+
+				if (parentMoved && childMoved) {
+					newSourceId = renamedIdMap.get(origParentId);
+					newTargetId = renamedIdMap.get(origChildId);
+					optionDef.setQuestionId(newTargetId);
+					renamedOptionMap.put(newSourceId, optionDef);
+				} else if (parentMoved) {
+					newSourceId = renamedIdMap.get(origParentId);
+					renamedOptionMap.put(newSourceId, optionDef);
+				} else if (childMoved) {
+					newTargetId = renamedIdMap.get(origChildId);
+					optionDef.setQuestionId(newTargetId);
+				} else {
+					renamedOptionMap.put(origParentId, optionDef);
 				}
+				if (log.isDebugEnabled())
+					log.debug(getQuestion(origParentId) + "<-"
+							+ getQuestion(origChildId) + " became "
+							+ getQuestion(newSourceId) + "<-"
+							+ getQuestion(newTargetId));
 			}
-			dynOptionMap.putAll(renamedOptionMap);
+			setDynamicOptions(renamedOptionMap);
 		}
 
+		log.debug("patching up validation rules");
 		for (ValidationRule validationRule : (Vector<ValidationRule>) getValidationRules()) {
-			if (globalIdMap.keySet().contains(validationRule.getQuestionId())) {
-				validationRule.setQuestionId(globalIdMap.get(validationRule
-						.getQuestionId()));
+			Short origId = validationRule.getQuestionId();
+			if (renamedIdMap.keySet().contains(origId)) {
+				Short newId = renamedIdMap.get(origId);
+				validationRule.setQuestionId(newId);
+
+				if (log.isDebugEnabled())
+					log.debug(origId + " became " + newId);
+
+				log.debug("patching condition references");
 				for (Condition condition : (Vector<Condition>) validationRule
 						.getConditions()) {
-					if (globalIdMap.keySet()
-							.contains(condition.getQuestionId())) {
-						condition.setQuestionId(globalIdMap.get(condition
-								.getQuestionId()));
+					Short origCondId = condition.getQuestionId();
+					if (renamedIdMap.keySet().contains(origCondId)) {
+						Short newCondId = renamedIdMap.get(origCondId);
+						condition.setQuestionId(newCondId);
+						if (log.isDebugEnabled())
+							log.debug(origCondId + " became " + newCondId);
 					}
 				}
 			}
 		}
 
+		log.debug("patching up skip rules");
 		for (SkipRule skipRule : (Vector<SkipRule>) getSkipRules()) {
+			log.debug("patching up skip rule conditions");
 			for (Condition condition : (Vector<Condition>) skipRule
 					.getConditions()) {
-				if (globalIdMap.containsKey(condition.getQuestionId())) {
-					condition.setQuestionId(globalIdMap.get(condition
-							.getQuestionId()));
+				Short origCondId = condition.getQuestionId();
+				if (renamedIdMap.containsKey(origCondId)) {
+					Short newCondId = renamedIdMap.get(origCondId);
+					condition.setQuestionId(newCondId);
+					if (log.isDebugEnabled())
+						log.debug(origCondId + " became " + newCondId);
 				}
 			}
+
 			Vector<Short> actionTargets = skipRule.getActionTargets();
+			if (log.isDebugEnabled())
+				log.debug("patching up skip rules targets: " + actionTargets);
 			for (int i = 0; i < actionTargets.size(); i++) {
-				if (globalIdMap.containsKey(actionTargets.get(i))) {
-					actionTargets.set(i, globalIdMap.get(actionTargets.get(i)));
+				if (renamedIdMap.containsKey(actionTargets.get(i))) {
+					actionTargets
+							.set(i, renamedIdMap.get(actionTargets.get(i)));
 				}
 			}
+			if (log.isDebugEnabled())
+				log.debug("targets became: " + actionTargets);
 		}
 
 		// Consolidate skip rules into optimal set using multi-targets
