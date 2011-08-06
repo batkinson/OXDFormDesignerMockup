@@ -25,12 +25,12 @@ public class DropTarget implements org.apache.pivot.wtk.DropTarget {
 	@Override
 	public DropAction dragEnter(Component component, Manifest dragContent,
 			int supportedDropActions, DropAction userDropAction) {
-		designTree = (TreeView) component;
 		DropAction action = null;
 		if (dragContent.containsFileList()
 				&& DropAction.COPY.isSelected(supportedDropActions)) {
 			action = DropAction.COPY;
 		} else if (dragContent.containsValue("node")) {
+			designTree = (TreeView) component;
 			action = DropAction.MOVE;
 		}
 		return action;
