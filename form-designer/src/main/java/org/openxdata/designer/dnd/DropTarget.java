@@ -12,8 +12,12 @@ import org.apache.pivot.wtk.Manifest;
 import org.apache.pivot.wtk.Point;
 import org.apache.pivot.wtk.TreeView;
 import org.openxdata.designer.DesignerApp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DropTarget implements org.apache.pivot.wtk.DropTarget {
+
+	private static Logger log = LoggerFactory.getLogger(DropTarget.class);
 
 	private DesignerApp application;
 	private TreeView designTree;
@@ -51,7 +55,7 @@ public class DropTarget implements org.apache.pivot.wtk.DropTarget {
 			try {
 				sourcePath = (Path) dragContent.getValue("path");
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error("failed to get drag content value", e);
 				return null;
 			}
 			Path targetPath = designTree.getNodeAt(y);
@@ -73,7 +77,7 @@ public class DropTarget implements org.apache.pivot.wtk.DropTarget {
 			try {
 				sourcePath = (Path) dragContent.getValue("path");
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error("failed to get drag content value", e);
 				return null;
 			}
 			Path targetPath = designTree.getNodeAt(y);
@@ -103,7 +107,7 @@ public class DropTarget implements org.apache.pivot.wtk.DropTarget {
 			try {
 				sourcePath = (Path) dragContent.getValue("path");
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.error("failed to get drag content value", e);
 				return null;
 			}
 			Path targetPath = designTree.getNodeAt(dropLocation.y);
