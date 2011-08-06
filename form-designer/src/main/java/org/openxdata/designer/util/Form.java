@@ -12,13 +12,10 @@ import org.apache.pivot.collections.List;
 import org.apache.pivot.collections.ListListener;
 import org.apache.pivot.collections.Sequence;
 import org.apache.pivot.util.ListenerList;
-import org.fcitmuk.epihandy.Condition;
 import org.fcitmuk.epihandy.DynamicOptionDef;
 import org.fcitmuk.epihandy.FormDef;
 import org.fcitmuk.epihandy.OptionDef;
 import org.fcitmuk.epihandy.PageDef;
-import org.fcitmuk.epihandy.SkipRule;
-import org.fcitmuk.epihandy.ValidationRule;
 import org.openxdata.designer.idgen.DefaultIdGenerator;
 import org.openxdata.designer.idgen.ScarceIdGenerator;
 import org.openxdata.modelutils.FormUtils;
@@ -61,11 +58,9 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 
 		Hashtable<Short, DynamicOptionDef> dynOptionMap = (Hashtable<Short, DynamicOptionDef>) getDynamicOptions();
 		if (dynOptionMap != null) {
-
 			if (log.isDebugEnabled())
 				log.debug("patching up " + dynOptionMap.size()
 						+ " dynamic options");
-
 			for (Map.Entry<Short, DynamicOptionDef> entry : dynOptionMap
 					.entrySet()) {
 				DynamicOptionDef dOptDef = entry.getValue();
@@ -98,95 +93,7 @@ public class Form extends org.fcitmuk.epihandy.FormDef implements List<Page> {
 		if (log.isDebugEnabled())
 			log.debug("qids changed (old=new): " + renamedIdMap);
 
-		if (dynOptionMap != null) {
-			if (log.isDebugEnabled())
-				log.debug("remapping dynamic options after qid changes");
-			Hashtable<Short, DynamicOptionDef> renamedOptionMap = new Hashtable<Short, DynamicOptionDef>();
-			for (Map.Entry<Short, DynamicOptionDef> entry : dynOptionMap
-					.entrySet()) {
-
-				Short origParentId = entry.getKey();
-				DynamicOptionDef optionDef = entry.getValue();
-				Short origChildId = optionDef.getQuestionId();
-
-				boolean parentMoved = renamedIdMap.containsKey(origParentId);
-				boolean childMoved = renamedIdMap.containsKey(origChildId);
-
-				Short newSourceId = origParentId, newTargetId = origChildId;
-
-				if (parentMoved && childMoved) {
-					newSourceId = renamedIdMap.get(origParentId);
-					newTargetId = renamedIdMap.get(origChildId);
-					optionDef.setQuestionId(newTargetId);
-					renamedOptionMap.put(newSourceId, optionDef);
-				} else if (parentMoved) {
-					newSourceId = renamedIdMap.get(origParentId);
-					renamedOptionMap.put(newSourceId, optionDef);
-				} else if (childMoved) {
-					newTargetId = renamedIdMap.get(origChildId);
-					optionDef.setQuestionId(newTargetId);
-				} else {
-					renamedOptionMap.put(origParentId, optionDef);
-				}
-				if (log.isDebugEnabled())
-					log.debug(getQuestion(origParentId) + "<-"
-							+ getQuestion(origChildId) + " became "
-							+ getQuestion(newSourceId) + "<-"
-							+ getQuestion(newTargetId));
-			}
-			setDynamicOptions(renamedOptionMap);
-		}
-
-		log.debug("patching up validation rules");
-		for (ValidationRule validationRule : (Vector<ValidationRule>) getValidationRules()) {
-			Short origId = validationRule.getQuestionId();
-			if (renamedIdMap.keySet().contains(origId)) {
-				Short newId = renamedIdMap.get(origId);
-				validationRule.setQuestionId(newId);
-
-				if (log.isDebugEnabled())
-					log.debug(origId + " became " + newId);
-
-				log.debug("patching condition references");
-				for (Condition condition : (Vector<Condition>) validationRule
-						.getConditions()) {
-					Short origCondId = condition.getQuestionId();
-					if (renamedIdMap.keySet().contains(origCondId)) {
-						Short newCondId = renamedIdMap.get(origCondId);
-						condition.setQuestionId(newCondId);
-						if (log.isDebugEnabled())
-							log.debug(origCondId + " became " + newCondId);
-					}
-				}
-			}
-		}
-
-		log.debug("patching up skip rules");
-		for (SkipRule skipRule : (Vector<SkipRule>) getSkipRules()) {
-			log.debug("patching up skip rule conditions");
-			for (Condition condition : (Vector<Condition>) skipRule
-					.getConditions()) {
-				Short origCondId = condition.getQuestionId();
-				if (renamedIdMap.containsKey(origCondId)) {
-					Short newCondId = renamedIdMap.get(origCondId);
-					condition.setQuestionId(newCondId);
-					if (log.isDebugEnabled())
-						log.debug(origCondId + " became " + newCondId);
-				}
-			}
-
-			Vector<Short> actionTargets = skipRule.getActionTargets();
-			if (log.isDebugEnabled())
-				log.debug("patching up skip rules targets: " + actionTargets);
-			for (int i = 0; i < actionTargets.size(); i++) {
-				if (renamedIdMap.containsKey(actionTargets.get(i))) {
-					actionTargets
-							.set(i, renamedIdMap.get(actionTargets.get(i)));
-				}
-			}
-			if (log.isDebugEnabled())
-				log.debug("targets became: " + actionTargets);
-		}
+		FormUtils.changeQuestionIds(this, renamedIdMap);
 
 		// Consolidate skip rules into optimal set using multi-targets
 		RuleUtils.consolidateSkipRules(this);
