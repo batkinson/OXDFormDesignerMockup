@@ -1,7 +1,7 @@
 # OXD Form Designer Prototype
 
-![Example Screenshot](screnshots/oxd-cirrus-shot-1.png)
-![Example Screenshot](screnshots/oxd-cirrus-shot-2.png)
+![Example Screenshot](screenshots/oxd-cirrus-shot-1.png)
+![Example Screenshot](screenshots/oxd-cirrus-shot-2.png)
 
 This is just an example showing how one might implement a graphical form
 designer for OpenXData using Apache Pivot. It is not meant to be an actual
