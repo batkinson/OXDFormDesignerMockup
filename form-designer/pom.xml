@@ -112,9 +112,9 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.openxdata.plugins</groupId>
+				<groupId>com.github.batkinson.plugins</groupId>
 				<artifactId>maven-pack200-plugin</artifactId>
-				<version>1.0</version>
+				<version>1.0.1</version>
 				<executions>
 					<execution>
 						<id>normalize-jars</id>
